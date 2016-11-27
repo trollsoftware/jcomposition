@@ -1,3 +1,8 @@
+hs_err_pid*
+
+# Java class files
+*.class
+
 .gradle
 build/
 
@@ -12,3 +17,12 @@ gradle-app.setting
 
 # # Work around https://youtrack.jetbrains.com/issue/IDEA-116898
 # gradle/wrapper/gradle-wrapper.properties
+
+# Intellij
+*.iml
+.idea/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/libraries
+
+
