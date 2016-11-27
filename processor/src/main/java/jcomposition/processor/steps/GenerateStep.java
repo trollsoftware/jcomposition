@@ -101,8 +101,9 @@ public class GenerateStep extends AbstractStep {
         ImmutableSet<ExecutableElement> methods = MoreElements.getLocalAndInheritedMethods(typeElement,
                 getProcessingEnv().getElementUtils());
 
-        // TODO: Generated name
-        TypeSpec.Builder specBuilder = TypeSpec.classBuilder(typeElement.getSimpleName().toString() + "_Generated")
+        String compositionName = TypeElementUtils.getCompositionName(typeElement, getProcessingEnv().getElementUtils());
+
+        TypeSpec.Builder specBuilder = TypeSpec.classBuilder(compositionName)
                 .addSuperinterface(TypeName.get(typeElement.asType()))
                 .addSuperinterface(CompositionUtil.getInheritedCompositionInterface(typeElement, getProcessingEnv()))
                 .addTypeVariables(getTypeParameters(typeElement))
