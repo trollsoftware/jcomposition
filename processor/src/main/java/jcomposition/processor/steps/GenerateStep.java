@@ -77,16 +77,6 @@ public class GenerateStep extends AbstractStep {
         }
     }
 
-    private List<TypeName> getSuperInterfaces(TypeElement typeElement) {
-        List<TypeName> typeNames = new ArrayList<TypeName>();
-
-        for (TypeMirror typeMirror : typeElement.getInterfaces()) {
-            typeNames.add(TypeName.get(typeMirror));
-        }
-
-        return typeNames;
-    }
-
     private List<TypeVariableName> getTypeParameters(TypeElement typeElement) {
         List<TypeVariableName> typeSpecs = new ArrayList<TypeVariableName>();
 
