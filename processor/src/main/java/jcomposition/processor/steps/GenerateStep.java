@@ -77,16 +77,6 @@ public class GenerateStep extends AbstractStep {
         }
     }
 
-    private List<TypeName> getSuperInterfaces(TypeElement typeElement) {
-        List<TypeName> typeNames = new ArrayList<TypeName>();
-
-        for (TypeMirror typeMirror : typeElement.getInterfaces()) {
-            typeNames.add(TypeName.get(typeMirror));
-        }
-
-        return typeNames;
-    }
-
     private List<TypeVariableName> getTypeParameters(TypeElement typeElement) {
         List<TypeVariableName> typeSpecs = new ArrayList<TypeVariableName>();
 
@@ -101,8 +91,9 @@ public class GenerateStep extends AbstractStep {
         ImmutableSet<ExecutableElement> methods = MoreElements.getLocalAndInheritedMethods(typeElement,
                 getProcessingEnv().getElementUtils());
 
-        // TODO: Generated name
-        TypeSpec.Builder specBuilder = TypeSpec.classBuilder(typeElement.getSimpleName().toString() + "_Generated")
+        String compositionName = TypeElementUtils.getCompositionName(typeElement, getProcessingEnv().getElementUtils());
+
+        TypeSpec.Builder specBuilder = TypeSpec.classBuilder(compositionName)
                 .addSuperinterface(TypeName.get(typeElement.asType()))
                 .addSuperinterface(CompositionUtil.getInheritedCompositionInterface(typeElement, getProcessingEnv()))
                 .addTypeVariables(getTypeParameters(typeElement))

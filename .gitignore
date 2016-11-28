@@ -6,6 +6,9 @@ hs_err_pid*
 .gradle
 build/
 
+# Ignore generated
+src/main/generated/
+
 # Ignore Gradle GUI config
 gradle-app.setting
 

@@ -9,6 +9,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,17 +54,16 @@ public class CompositionUtil {
         return specs;
     }
 
-    private static ClassName getNestedCompositionClassName(TypeElement typeElement) {
-        // TODO: name
-        ClassName nested = ClassName.get(MoreElements.getPackage(typeElement).toString()
-                , typeElement.getSimpleName().toString() + "_Generated", "Composition");
+    private static ClassName getNestedCompositionClassName(TypeElement typeElement, Elements utils) {
+        String name = TypeElementUtils.getCompositionName(typeElement, utils);
+        ClassName nested = ClassName.get(MoreElements.getPackage(typeElement).toString(), name, "Composition");
 
         return nested;
     }
 
     public static TypeName getInheritedCompositionInterface(TypeElement typeElement, ProcessingEnvironment env) {
         ClassName composition = ClassName.get(IComposition.class);
-        ClassName nested = getNestedCompositionClassName(typeElement);
+        ClassName nested = getNestedCompositionClassName(typeElement, env.getElementUtils());
 
         return ParameterizedTypeName.get(composition, nested);
     }
