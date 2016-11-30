@@ -10,4 +10,8 @@ public class GameObject extends GameObjectBase {
         // Also update GameObject on draw.
         getComposition().composition_Updatable.update();
     }
+
+    @Override
+    protected void onInject(Composition composition) {
+    }
 }

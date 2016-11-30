@@ -6,6 +6,7 @@ import com.squareup.javapoet.*;
 import jcomposition.api.IComposition;
 
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.inject.Inject;
 import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CompositionUtil {
+
      public static TypeSpec getCompositionTypeSpec(TypeElement typeElement, ProcessingEnvironment env) {
          TypeSpec.Builder builder = TypeSpec.classBuilder("Composition");
          List<FieldSpec> fieldSpecs = getFieldsSpecs(typeElement, env);
@@ -21,6 +23,15 @@ public class CompositionUtil {
          builder.addModifiers(Modifier.FINAL, Modifier.PROTECTED);
 
          if (fieldSpecs.size() > 0) {
+             if (TypeElementUtils.hasInheritedInjectionAnnotation(typeElement)) {
+                 String compositionName = TypeElementUtils.getCompositionName(typeElement, env.getElementUtils());
+
+                 builder.addMethod(MethodSpec.constructorBuilder()
+                         .addStatement(compositionName + ".this.onInject(this)")
+                         .addModifiers(Modifier.PRIVATE)
+                         .build());
+             }
+
              builder.addFields(fieldSpecs);
          }
 
@@ -31,10 +42,14 @@ public class CompositionUtil {
         List<FieldSpec> specs = new ArrayList<FieldSpec>();
 
         for (TypeMirror typeInterface : typeElement.getInterfaces()) {
-            TypeElement bindClassType = TypeElementUtils.getBindClassType(MoreTypes.asTypeElement(typeInterface), env.getElementUtils());
+            TypeElement typeInterfaceElement = MoreTypes.asTypeElement(typeInterface);
+            TypeElement bindClassType = TypeElementUtils.getBindClassType(typeInterfaceElement, env.getElementUtils());
 
             if (bindClassType == null)
                 continue;
+
+            boolean useInjection = TypeElementUtils.hasUseInjectionAnnotation(typeInterfaceElement)
+                    || TypeElementUtils.hasUseInjectionAnnotation(bindClassType);
 
             List<?> typeArguments = MoreTypes.asDeclared(typeInterface).getTypeArguments();
             TypeMirror[] typeMirrors = new TypeMirror[typeArguments.size()];
@@ -42,19 +57,25 @@ public class CompositionUtil {
             DeclaredType declaredType = env.getTypeUtils().getDeclaredType(bindClassType, typeArguments.toArray(typeMirrors));
 
             TypeName typeName = TypeName.get(declaredType);
+            String initializer = useInjection ? "null" : "new " + typeName.toString() + "()";
 
-            FieldSpec spec = FieldSpec.builder(typeName, "composition_" + bindClassType.getSimpleName())
-                    .addModifiers(Modifier.FINAL, Modifier.PROTECTED)
-                    .initializer("new " + typeName.toString() + "()")
-                    .build();
+            FieldSpec.Builder specBuilder = FieldSpec.builder(typeName, "composition_" + bindClassType.getSimpleName())
+                    .addModifiers(Modifier.PROTECTED)
+                    .initializer(initializer);
 
-            specs.add(spec);
+            if (useInjection) {
+                specBuilder.addAnnotation(Inject.class);
+            } else {
+                specBuilder.addModifiers(Modifier.FINAL);
+            }
+
+            specs.add(specBuilder.build());
         }
 
         return specs;
     }
 
-    private static ClassName getNestedCompositionClassName(TypeElement typeElement, Elements utils) {
+    public static ClassName getNestedCompositionClassName(TypeElement typeElement, Elements utils) {
         String name = TypeElementUtils.getCompositionName(typeElement, utils);
         ClassName nested = ClassName.get(MoreElements.getPackage(typeElement).toString(), name, "Composition");
 

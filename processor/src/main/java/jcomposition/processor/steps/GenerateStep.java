@@ -33,6 +33,7 @@ import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.TypeVariable;
 import javax.lang.model.util.ElementFilter;
 import javax.tools.Diagnostic;
 import java.io.IOException;
@@ -102,6 +103,19 @@ public class GenerateStep extends AbstractStep {
                 .addMethods(getMethodSpecs(methods, typeElement))
                 .addMethod(CompositionUtil.getCompositeMethodSpec(typeElement, getProcessingEnv()))
                 .addField(CompositionUtil.getCompositeFieldSpec(typeElement));
+
+        if (TypeElementUtils.hasInheritedInjectionAnnotation(typeElement)) {
+            isAbstract = true;
+
+            ClassName nestedCompositionClassName = CompositionUtil.getNestedCompositionClassName(typeElement, getProcessingEnv().getElementUtils());
+            TypeName nestedCompositionTypeClassName = TypeVariableName.get(nestedCompositionClassName.simpleName());
+
+            specBuilder.addMethod(MethodSpec.methodBuilder("onInject")
+                    .addModifiers(Modifier.ABSTRACT, Modifier.PROTECTED)
+                    .addParameter(ParameterSpec.builder(nestedCompositionTypeClassName, "composition", Modifier.FINAL)
+                            .build())
+                    .build());
+        }
 
         if (isAbstract) {
             specBuilder.addModifiers(Modifier.ABSTRACT);
