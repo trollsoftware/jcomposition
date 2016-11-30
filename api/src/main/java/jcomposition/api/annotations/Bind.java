@@ -26,5 +26,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
 public @interface Bind {
-    Class value();
+    Class<?> value();
 }

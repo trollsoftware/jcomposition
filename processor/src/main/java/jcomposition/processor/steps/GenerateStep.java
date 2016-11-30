@@ -25,7 +25,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.*;
 import jcomposition.api.annotations.Composition;
-import jcomposition.processor.utils.CompositionUtil;
+import jcomposition.processor.utils.CompositionUtils;
 import jcomposition.processor.utils.TypeElementUtils;
 
 import javax.annotation.processing.ProcessingEnvironment;
@@ -95,13 +95,26 @@ public class GenerateStep extends AbstractStep {
 
         TypeSpec.Builder specBuilder = TypeSpec.classBuilder(compositionName)
                 .addSuperinterface(TypeName.get(typeElement.asType()))
-                .addSuperinterface(CompositionUtil.getInheritedCompositionInterface(typeElement, getProcessingEnv()))
+                .addSuperinterface(CompositionUtils.getInheritedCompositionInterface(typeElement, getProcessingEnv()))
                 .addTypeVariables(getTypeParameters(typeElement))
                 .addModifiers(Modifier.PUBLIC)
-                .addType(CompositionUtil.getCompositionTypeSpec(typeElement, getProcessingEnv()))
+                .addType(CompositionUtils.getCompositionTypeSpec(typeElement, getProcessingEnv()))
                 .addMethods(getMethodSpecs(methods, typeElement))
-                .addMethod(CompositionUtil.getCompositeMethodSpec(typeElement, getProcessingEnv()))
-                .addField(CompositionUtil.getCompositeFieldSpec(typeElement));
+                .addMethod(CompositionUtils.getCompositeMethodSpec(typeElement, getProcessingEnv()))
+                .addField(CompositionUtils.getCompositeFieldSpec(typeElement));
+
+        if (TypeElementUtils.hasInheritedInjectionAnnotation(typeElement)) {
+            isAbstract = true;
+
+            ClassName nestedCompositionClassName = CompositionUtils.getNestedCompositionClassName(typeElement, getProcessingEnv().getElementUtils());
+            TypeName nestedCompositionTypeClassName = TypeVariableName.get(nestedCompositionClassName.simpleName());
+
+            specBuilder.addMethod(MethodSpec.methodBuilder("onInject")
+                    .addModifiers(Modifier.ABSTRACT, Modifier.PROTECTED)
+                    .addParameter(ParameterSpec.builder(nestedCompositionTypeClassName, "composition", Modifier.FINAL)
+                            .build())
+                    .build());
+        }
 
         if (isAbstract) {
             specBuilder.addModifiers(Modifier.ABSTRACT);
@@ -129,7 +142,7 @@ public class GenerateStep extends AbstractStep {
         }
 
         returnBuilder.append("getComposition().composition_" + bindClassType.getSimpleName()
-                + "." + executableElement.getSimpleName() + "()");
+                + "." + executableElement.getSimpleName() + "(" + getParametersScope(executableElement) + ")");
 
         builder.addStatement(returnBuilder.toString());
 
@@ -166,5 +179,22 @@ public class GenerateStep extends AbstractStep {
         }
 
         return null;
+    }
+
+    private String getParametersScope(ExecutableElement element) {
+        StringBuilder paramBuilder = new StringBuilder();
+        List<? extends VariableElement> parameters = element.getParameters();
+
+        for (int i = 0; i < parameters.size(); i++) {
+            VariableElement variableElement = parameters.get(i);
+
+            paramBuilder.append(variableElement.getSimpleName());
+
+            if (i < parameters.size() - 1) {
+                paramBuilder.append(", ");
+            }
+        }
+
+        return paramBuilder.toString();
     }
 }

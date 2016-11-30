@@ -7,10 +7,12 @@ import com.sun.tools.javac.code.Type;
 import jcomposition.api.Const;
 import jcomposition.api.annotations.Bind;
 import jcomposition.api.annotations.Composition;
+import jcomposition.api.annotations.UseInjection;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import java.lang.annotation.Annotation;
 
@@ -41,6 +43,24 @@ public class TypeElementUtils {
         }
 
         return null;
+    }
+
+    public static boolean hasUseInjectionAnnotation(TypeElement element) {
+        return MoreElements.isAnnotationPresent(element, UseInjection.class);
+    }
+
+    public static boolean hasInheritedInjectionAnnotation(TypeElement element) {
+        if (hasUseInjectionAnnotation(element))
+            return true;
+
+        for (TypeMirror typeInterface : element.getInterfaces()) {
+            TypeElement asElement = MoreTypes.asTypeElement(typeInterface);
+
+            if (hasUseInjectionAnnotation(asElement))
+                return true;
+        }
+
+        return false;
     }
 
     private static Optional<AnnotationValue> getParameterFrom(TypeElement typeElement
