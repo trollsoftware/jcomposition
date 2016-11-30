@@ -1,8 +1,17 @@
 package jcomposition.example.injection;
 
+import jcomposition.example.Movable;
+
 public class GameObjectWithInjection extends GameObjectWithInjectionBase {
+    private InjectionComponent injectionComponent;
+
     @Override
     protected void onInject(Composition composition) {
-        // Some injection into composition code
+        injectionComponent = DaggerInjectionComponent
+                .builder()
+                .movableModule(new Movable.MovableModule())
+                .build();
+
+        injectionComponent.inject(composition);
     }
 }
