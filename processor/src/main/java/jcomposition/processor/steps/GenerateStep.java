@@ -142,8 +142,21 @@ public class GenerateStep extends AbstractStep {
             return null;
         }
 
+        StringBuilder paramBuilder = new StringBuilder();
+        List<? extends VariableElement> parameters = executableElement.getParameters();
+
+        for (int i = 0; i < parameters.size(); i++) {
+            VariableElement variableElement = parameters.get(i);
+
+            paramBuilder.append(variableElement.getSimpleName());
+
+            if (i < parameters.size() - 1) {
+                paramBuilder.append(',');
+            }
+        }
+
         returnBuilder.append("getComposition().composition_" + bindClassType.getSimpleName()
-                + "." + executableElement.getSimpleName() + "()");
+                + "." + executableElement.getSimpleName() + "(" + paramBuilder.toString() + ")");
 
         builder.addStatement(returnBuilder.toString());
 
