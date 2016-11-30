@@ -14,7 +14,7 @@ import javax.lang.model.util.Elements;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CompositionUtil {
+public class CompositionUtils {
 
      public static TypeSpec getCompositionTypeSpec(TypeElement typeElement, ProcessingEnvironment env) {
          TypeSpec.Builder builder = TypeSpec.classBuilder("Composition");
