@@ -5,6 +5,7 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.sun.tools.javac.code.Type;
+import com.sun.tools.javac.code.Types;
 import jcomposition.api.Const;
 import jcomposition.api.annotations.Bind;
 import jcomposition.api.annotations.Composition;
@@ -59,7 +60,9 @@ public class TypeElementUtils {
             /**
              * Bind annotation is not valid if Bind's class value isn't implements element interface
              */
-            if (!typeElement.getInterfaces().contains(element.asType())) {
+            javax.lang.model.util.Types types = environment.getTypeUtils();
+            if (!types.isAssignable(typeElement.asType(), element.asType())
+                    && !types.isAssignable(typeElement.getSuperclass(), element.asType())) {
                 environment.getMessager().printMessage(Diagnostic.Kind.ERROR
                         , "Bind's annotation value class must implement " + element.getSimpleName() + " interface"
                         , element
