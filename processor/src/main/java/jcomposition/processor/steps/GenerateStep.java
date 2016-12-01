@@ -135,7 +135,7 @@ public class GenerateStep extends AbstractStep {
 
         TypeElement nearElement = getNearOverrideExecutable(executableElement, typeElement);
         TypeElement bindClassType = TypeElementUtils.getBindClassType(nearElement
-                , getProcessingEnv().getElementUtils());
+                , getProcessingEnv());
 
         if (bindClassType == null) {
             return null;

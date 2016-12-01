@@ -43,7 +43,7 @@ public class CompositionUtils {
 
         for (TypeMirror typeInterface : typeElement.getInterfaces()) {
             TypeElement typeInterfaceElement = MoreTypes.asTypeElement(typeInterface);
-            TypeElement bindClassType = TypeElementUtils.getBindClassType(typeInterfaceElement, env.getElementUtils());
+            TypeElement bindClassType = TypeElementUtils.getBindClassType(typeInterfaceElement, env);
 
             if (bindClassType == null)
                 continue;
