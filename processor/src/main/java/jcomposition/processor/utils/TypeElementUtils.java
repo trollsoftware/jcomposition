@@ -3,17 +3,20 @@ package jcomposition.processor.utils;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.sun.tools.javac.code.Type;
 import jcomposition.api.Const;
 import jcomposition.api.annotations.Bind;
 import jcomposition.api.annotations.Composition;
 import jcomposition.api.annotations.UseInjection;
 
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.TypeElement;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.element.*;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
+import javax.tools.Diagnostic;
 import java.lang.annotation.Annotation;
 
 public class TypeElementUtils {
@@ -33,11 +36,38 @@ public class TypeElementUtils {
         return defaultName;
     }
 
-    public static TypeElement getBindClassType(TypeElement element, Elements utils) {
-        Optional<AnnotationValue> value = getParameterFrom(element, Bind.class, "value", utils);
+    public static TypeElement getBindClassType(TypeElement element, ProcessingEnvironment environment) {
+        Optional<AnnotationValue> value = getParameterFrom(element
+                , Bind.class
+                , "value"
+                , environment.getElementUtils());
 
         if (value.isPresent()) {
             TypeElement typeElement = MoreTypes.asTypeElement((Type) value.get().getValue());
+            AnnotationMirror bindMirror = MoreElements.getAnnotationMirror(typeElement, Bind.class).orNull();
+
+            if (!typeElement.getKind().isClass() || isAbstract(typeElement)) {
+                environment.getMessager().printMessage(Diagnostic.Kind.ERROR
+                        , "Bind's annotation value must be kind of non-abstract class"
+                        , element
+                        , bindMirror
+                        , value.get());
+
+                return null;
+            }
+
+            /**
+             * Bind annotation is not valid if Bind's class value isn't implements element interface
+             */
+            if (!typeElement.getInterfaces().contains(element.asType())) {
+                environment.getMessager().printMessage(Diagnostic.Kind.ERROR
+                        , "Bind's annotation value class must implement " + element.getSimpleName() + " interface"
+                        , element
+                        , bindMirror
+                        , value.get());
+
+                return null;
+            }
 
             return typeElement;
         }
@@ -76,5 +106,11 @@ public class TypeElementUtils {
         }
 
         return Optional.absent();
+    }
+
+    private static boolean isAbstract(TypeElement typeElement) {
+        Predicate<Element> predicate = MoreElements.hasModifiers(Modifier.ABSTRACT);
+
+        return predicate.apply(typeElement);
     }
 }
