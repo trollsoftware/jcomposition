@@ -29,5 +29,4 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Composition {
     String name() default Const.UNDEFINED;
-    Class extendsFrom() default Const.UNDEFINED.class;
 }

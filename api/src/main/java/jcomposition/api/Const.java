@@ -20,6 +20,5 @@ package jcomposition.api;
 
 public class Const {
     public final static class UNDEFINED {}
-
     public final static String UNDEFINED = "[UNDEFINED]";
 }
