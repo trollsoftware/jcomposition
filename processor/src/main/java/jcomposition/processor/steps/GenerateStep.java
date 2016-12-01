@@ -128,23 +128,23 @@ public class GenerateStep extends AbstractStep {
 
         MethodSpec.Builder builder = MethodSpec.overriding(executableElement, declaredType, getProcessingEnv().getTypeUtils());
 
-        StringBuilder returnBuilder = new StringBuilder();
-        if (executableElement.getReturnType().getKind() != TypeKind.VOID) {
-            returnBuilder.append("return ");
-        }
+        List<TypeElement> overriders = getListOverridersExecutable(executableElement, typeElement);
 
-        TypeElement nearElement = getNearOverrideExecutable(executableElement, typeElement);
-        TypeElement bindClassType = TypeElementUtils.getBindClassType(nearElement
-                , getProcessingEnv());
-
-        if (bindClassType == null) {
+        if (overriders.size() == 0)
             return null;
+
+        boolean returnVoid = executableElement.getReturnType().getKind() == TypeKind.VOID;
+
+        for (TypeElement overrider : overriders) {
+            String statement = getExecutableStatement(executableElement, overrider);
+
+            if (statement != null) {
+                builder.addStatement(statement);
+            }
+            if (!returnVoid) {
+                break;
+            }
         }
-
-        returnBuilder.append("getComposition().composition_" + bindClassType.getSimpleName()
-                + "." + executableElement.getSimpleName() + "(" + getParametersScope(executableElement) + ")");
-
-        builder.addStatement(returnBuilder.toString());
 
         return builder.build();
     }
@@ -165,7 +165,9 @@ public class GenerateStep extends AbstractStep {
         return result;
     }
 
-    private TypeElement getNearOverrideExecutable(ExecutableElement executableElement, TypeElement typeElement) {
+    private List<TypeElement> getListOverridersExecutable(ExecutableElement executableElement, TypeElement typeElement) {
+        List<TypeElement> overriders = new ArrayList<TypeElement>();
+
         for (TypeMirror typeMirror : typeElement.getInterfaces()) {
             TypeElement currentTypeElement = MoreTypes.asTypeElement(typeMirror);
             List<? extends Element> allMembers = getProcessingEnv()
@@ -174,11 +176,11 @@ public class GenerateStep extends AbstractStep {
             List<? extends ExecutableElement> methods = ElementFilter.methodsIn(allMembers);
 
             if (methods.contains(executableElement)) {
-                return currentTypeElement;
+                overriders.add(currentTypeElement);
             }
         }
 
-        return null;
+        return overriders;
     }
 
     private String getParametersScope(ExecutableElement element) {
@@ -196,5 +198,23 @@ public class GenerateStep extends AbstractStep {
         }
 
         return paramBuilder.toString();
+    }
+
+    private String getExecutableStatement(ExecutableElement executableElement, TypeElement overrider) {
+        StringBuilder builder = new StringBuilder();
+        TypeElement bindClassType = TypeElementUtils.getBindClassType(overrider, getProcessingEnv());
+
+        if (bindClassType == null) {
+            return null;
+        }
+
+        if (executableElement.getReturnType().getKind() != TypeKind.VOID) {
+            builder.append("return ");
+        }
+
+        builder.append("getComposition().composition_" + bindClassType.getSimpleName()
+                + "." + executableElement.getSimpleName() + "(" + getParametersScope(executableElement) + ")");
+
+        return builder.toString();
     }
 }

@@ -1,3 +1,5 @@
+package jcomposition.example;
+
 import jcomposition.example.injection.GameObjectWithInjection;
 import jcomposition.example.injection.IGameObjectWithInjection;
 import org.junit.Before;

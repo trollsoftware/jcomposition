@@ -1,3 +1,5 @@
+package jcomposition.example;
+
 import jcomposition.example.inheritance.GameObject;
 import jcomposition.example.inheritance.IGameObject;
 import org.junit.Before;
@@ -6,12 +8,13 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class InheritanceTest {
-    IGameObject go;
+public class InheritanceTest<T extends IGameObject> {
+    T go;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void before() {
-        go = new GameObject();
+        go = (T) new GameObject();
     }
 
     @Test
