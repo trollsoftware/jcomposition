@@ -134,4 +134,16 @@ public class GameObjectWithInjection extends GameObjectWithInjectionBase {
 ```
 
 ## Download
-TODO
+If you want to add the Processor to your project, you can just add new repository to your gradle config:
+```
+repositories { ...
+    maven { 
+        url 'https://jitpack.io' 
+    } 
+}
+```
+and add the dependency:
+```
+dependencies { compile 'com.github.trollsoftware.jcomposition:processor:1.0' }``
+```
+If you need tests, you can download the whole project from github, build it and run tests via IDE or command line (./gradlew cleanTest test -i).
