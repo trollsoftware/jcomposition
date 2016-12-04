@@ -45,6 +45,7 @@ dependencies {
 }
 
 subprojects {
+    apply plugin: 'java'
     apply plugin: 'maven'
 
     task sourcesJar(type: Jar, dependsOn: classes) {
@@ -60,6 +61,7 @@ subprojects {
     artifacts {
         archives sourcesJar
         archives javadocJar
+        archives jar
     }
 
     // To specify a license in the pom:
