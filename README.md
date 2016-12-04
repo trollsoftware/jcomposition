@@ -1,3 +1,4 @@
+[![](https://jitpack.io/v/trollsoftware/jcomposition.svg)](https://jitpack.io/#trollsoftware/jcomposition) [![Build Status](https://travis-ci.org/trollsoftware/jcomposition.svg?branch=master)](https://travis-ci.org/trollsoftware/jcomposition)
 # JComposition
 JComposition is a lightweight Java API based on annotations for creating compositions at compile-time. Composition over inheritance.
 
@@ -40,7 +41,6 @@ JComposition is tool that you can use to mix such logic in one class without dup
 
 ## Using JComposition
 JComposition uses interfaces as base for code generation. 
-
 ### Basic usage
 Define your interfaces for each module you want to extend:
 ```java
@@ -74,7 +74,6 @@ GameObject gameObject = new GameObject();
 gameObject.update();
 gameObject.draw();
 ```
-
 ### Overriding
 By default `gameObject.draw()` will call `getComposition().composition_Drawable.draw()`, but you can override behaviour this way:
 ```java
@@ -133,17 +132,31 @@ public class GameObjectWithInjection extends GameObjectWithInjectionBase {
 }
 ```
 
+## Constraints
+If you are not using dependency injection, binded class must have an empty argument constructor.
+
+## Examples
+You can find more examples  [here](./src/main/java/jcomposition/example "JComposition examples")
+
 ## Download
-If you want to add the Processor to your project, you can just add new repository to your gradle config:
+We are using JitPack for publishing our libraries. 
+Add jitpack.io to your repositories first to build.gradle:
 ```
-repositories { ...
-    maven { 
-        url 'https://jitpack.io' 
-    } 
+allprojects {
+	repositories {
+		...
+		maven { url 'https://jitpack.io' }
+	}
 }
 ```
-and add the dependency:
+And add the dependency:
 ```
-dependencies { compile 'com.github.trollsoftware.jcomposition:processor:1.0' }``
+dependencies {
+    // Use apt for processor instead of compile if you have it
+    compile 'com.github.trollsoftware.jcomposition:processor:1.0'
+    compile 'com.github.trollsoftware.jcomposition:api:1.0'
+}
 ```
-If you need tests, you can download the whole project from github, build it and run tests via IDE or command line (./gradlew cleanTest test -i).
+
+## License
+This library is distributed under the Apache 2.0 license found in the [LICENSE](./LICENSE) file.
