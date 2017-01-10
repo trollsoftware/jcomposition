@@ -92,6 +92,8 @@ public class GenerateStep extends AbstractStep {
                 getProcessingEnv().getElementUtils());
 
         String compositionName = TypeElementUtils.getCompositionName(typeElement, getProcessingEnv().getElementUtils());
+        Composition.MergeConflictPolicy mergeConflictPolicy = TypeElementUtils.getCompositionMergeConflictPolicy(
+                typeElement, getProcessingEnv().getElementUtils());
 
         TypeSpec.Builder specBuilder = TypeSpec.classBuilder(compositionName)
                 .addSuperinterface(TypeName.get(typeElement.asType()))
@@ -99,7 +101,7 @@ public class GenerateStep extends AbstractStep {
                 .addTypeVariables(getTypeParameters(typeElement))
                 .addModifiers(Modifier.PUBLIC)
                 .addType(CompositionUtils.getCompositionTypeSpec(typeElement, getProcessingEnv()))
-                .addMethods(getMethodSpecs(methods, typeElement))
+                .addMethods(getMethodSpecs(methods, typeElement, mergeConflictPolicy))
                 .addMethod(CompositionUtils.getCompositeMethodSpec(typeElement, getProcessingEnv()))
                 .addField(CompositionUtils.getCompositeFieldSpec(typeElement));
 
@@ -123,7 +125,7 @@ public class GenerateStep extends AbstractStep {
         return specBuilder.build();
     }
 
-    private MethodSpec getMethodSpec(ExecutableElement executableElement, TypeElement typeElement) {
+    private MethodSpec getMethodSpec(ExecutableElement executableElement, TypeElement typeElement, Composition.MergeConflictPolicy policy) {
         DeclaredType declaredType = MoreTypes.asDeclared(typeElement.asType());
 
         MethodSpec.Builder builder = MethodSpec.overriding(executableElement, declaredType, getProcessingEnv().getTypeUtils());
@@ -133,7 +135,14 @@ public class GenerateStep extends AbstractStep {
         if (overriders.size() == 0)
             return null;
 
-        boolean returnVoid = executableElement.getReturnType().getKind() == TypeKind.VOID;
+        boolean hasMergeConflict = (overriders.size() > 1);
+
+        if (hasMergeConflict && policy == Composition.MergeConflictPolicy.MakeAbstract) {
+            return null;
+        }
+
+        boolean useFirst = executableElement.getReturnType().getKind() != TypeKind.VOID
+                || (hasMergeConflict && policy == Composition.MergeConflictPolicy.UseFirst);
 
         for (TypeElement overrider : overriders) {
             String statement = getExecutableStatement(executableElement, overrider);
@@ -141,7 +150,7 @@ public class GenerateStep extends AbstractStep {
             if (statement != null) {
                 builder.addStatement(statement);
             }
-            if (!returnVoid) {
+            if (useFirst) {
                 break;
             }
         }
@@ -149,11 +158,11 @@ public class GenerateStep extends AbstractStep {
         return builder.build();
     }
 
-    private List<MethodSpec> getMethodSpecs(Iterable<ExecutableElement> elements, TypeElement typeElement) {
+    private List<MethodSpec> getMethodSpecs(Iterable<ExecutableElement> elements, TypeElement typeElement, Composition.MergeConflictPolicy policy) {
         List<MethodSpec> result = new ArrayList<MethodSpec>();
 
         for (ExecutableElement element : elements) {
-            MethodSpec spec = getMethodSpec(element, typeElement);
+            MethodSpec spec = getMethodSpec(element, typeElement, policy);
 
             if (spec != null) {
                 result.add(spec);

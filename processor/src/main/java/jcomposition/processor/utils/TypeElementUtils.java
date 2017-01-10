@@ -4,6 +4,7 @@ import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
+import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Types;
 import jcomposition.api.Const;
@@ -19,6 +20,7 @@ import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 import java.lang.annotation.Annotation;
+import java.lang.annotation.IncompleteAnnotationException;
 
 public class TypeElementUtils {
 
@@ -35,6 +37,18 @@ public class TypeElementUtils {
         }
 
         return defaultName;
+    }
+
+    public static Composition.MergeConflictPolicy getCompositionMergeConflictPolicy(TypeElement element, Elements utils) {
+        Optional<AnnotationValue> value = getParameterFrom(element, Composition.class, "onConflict", utils);
+
+        if (value.isPresent()) {
+            Symbol.VarSymbol vs = (Symbol.VarSymbol) value.get().getValue();
+
+            return Enum.valueOf(Composition.MergeConflictPolicy.class, vs.getSimpleName().toString());
+        }
+
+        throw new IncompleteAnnotationException(Composition.class, "onConflict");
     }
 
     public static TypeElement getBindClassType(TypeElement element, ProcessingEnvironment environment) {
