@@ -28,5 +28,22 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
 public @interface Composition {
+    public enum MergeConflictPolicy {
+        /**
+         * Use first overriding method in case of returning non-void value.
+         * Mix methods call that returns nothing (void)
+         */
+        MixVoid,
+        /**
+         * Use first overriding method in case of conflict
+         */
+        UseFirst,
+        /**
+         * Make method abstract in case of conflict.
+         */
+        MakeAbstract
+    }
+
     String name() default Const.UNDEFINED;
+    MergeConflictPolicy onConflict() default MergeConflictPolicy.MixVoid;
 }
