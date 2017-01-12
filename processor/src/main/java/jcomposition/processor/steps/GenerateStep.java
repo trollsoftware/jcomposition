@@ -90,6 +90,8 @@ public class GenerateStep extends AbstractStep {
     private TypeSpec getTypeSpec(TypeElement typeElement) {
         ImmutableSet<ExecutableElement> methods = MoreElements.getLocalAndInheritedMethods(typeElement,
                 getProcessingEnv().getElementUtils());
+        // Validate Bind's annotation
+        TypeElementUtils.getBindClassType(typeElement, getProcessingEnv());
 
         String compositionName = TypeElementUtils.getCompositionName(typeElement, getProcessingEnv().getElementUtils());
         Composition.MergeConflictPolicy mergeConflictPolicy = TypeElementUtils.getCompositionMergeConflictPolicy(
