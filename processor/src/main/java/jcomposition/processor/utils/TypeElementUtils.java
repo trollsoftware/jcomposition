@@ -14,6 +14,7 @@ import jcomposition.api.annotations.UseInjection;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.*;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
@@ -75,7 +76,8 @@ public class TypeElementUtils {
              * Bind annotation is not valid if Bind's class value isn't implements element interface
              */
             javax.lang.model.util.Types types = environment.getTypeUtils();
-            if (!types.isAssignable(typeElement.asType(), element.asType())
+
+            if (!types.isAssignable(types.getDeclaredType(typeElement), types.getDeclaredType(element))
                     && !types.isAssignable(typeElement.getSuperclass(), element.asType())) {
                 environment.getMessager().printMessage(Diagnostic.Kind.ERROR
                         , "Bind's annotation value class must implement " + element.getSimpleName() + " interface"
