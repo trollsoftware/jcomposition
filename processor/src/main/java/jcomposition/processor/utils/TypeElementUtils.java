@@ -125,9 +125,8 @@ public final class TypeElementUtils {
 
         for (ExecutableElement method : elementsFromBind) {
             ExecutableElementContainer container = new ExecutableElementContainer(method, env.getTypeUtils());
-            RelationShipResult result = findRelation(method, elementsFromBind, bind, env);
             DeclaredType dt = getDeclaredType(intf, bind, env);
-            TypeElementContainer typeElementContainer = new TypeElementContainer(bind, dt, result.getRelationShip());
+            TypeElementContainer typeElementContainer = new TypeElementContainer(bind, dt, TypeElementContainer.ExecutableRelationShip.Nothing);
 
             addValueToMapList(container, typeElementContainer, map);
         }
