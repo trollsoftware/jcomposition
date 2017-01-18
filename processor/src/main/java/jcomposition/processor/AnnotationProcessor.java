@@ -23,6 +23,7 @@ import com.google.auto.service.AutoService;
 import jcomposition.processor.steps.GenerateStep;
 
 import javax.annotation.processing.Processor;
+import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import java.util.Arrays;
 
@@ -34,6 +35,11 @@ public class AnnotationProcessor extends BasicAnnotationProcessor {
         return Arrays.asList(
                 new GenerateStep(processingEnv)
         );
+    }
+
+    @Override
+    protected void postRound(RoundEnvironment roundEnv) {
+        super.postRound(roundEnv);
     }
 
     @Override

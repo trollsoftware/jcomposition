@@ -15,7 +15,7 @@ dependencies {
     compile files(org.gradle.internal.jvm.Jvm.current().getToolsJar())
 
     compile group: 'com.google.auto.service', name: 'auto-service', version: '1.0-rc2'
-    compile group: 'com.google.auto', name: 'auto-common', version: '0.6'
+    compile group: 'com.google.auto', name: 'auto-common', version: '0.8'
     compile group: 'com.squareup', name: 'javapoet', version: '1.8.0'
     compile group: 'javax.inject', name: 'javax.inject', version: '1'
 

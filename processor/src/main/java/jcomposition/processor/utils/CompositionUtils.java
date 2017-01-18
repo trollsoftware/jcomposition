@@ -14,7 +14,7 @@ import javax.lang.model.util.Elements;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CompositionUtils {
+public final class CompositionUtils {
 
      public static TypeSpec getCompositionTypeSpec(TypeElement typeElement, ProcessingEnvironment env) {
          TypeSpec.Builder builder = TypeSpec.classBuilder("Composition");
@@ -23,8 +23,8 @@ public class CompositionUtils {
          builder.addModifiers(Modifier.FINAL, Modifier.PROTECTED);
 
          if (fieldSpecs.size() > 0) {
-             if (TypeElementUtils.hasInheritedInjectionAnnotation(typeElement)) {
-                 String compositionName = TypeElementUtils.getCompositionName(typeElement, env.getElementUtils());
+             if (AnnotationUtils.hasInheritedInjectionAnnotation(typeElement)) {
+                 String compositionName = AnnotationUtils.getCompositionName(typeElement, env);
 
                  builder.addMethod(MethodSpec.constructorBuilder()
                          .addStatement(compositionName + ".this.onInject(this)")
@@ -43,13 +43,13 @@ public class CompositionUtils {
 
         for (TypeMirror typeInterface : typeElement.getInterfaces()) {
             TypeElement typeInterfaceElement = MoreTypes.asTypeElement(typeInterface);
-            TypeElement bindClassType = TypeElementUtils.getBindClassType(typeInterfaceElement, env);
+            TypeElement bindClassType = AnnotationUtils.getBindClassType(typeInterfaceElement, env);
 
             if (bindClassType == null)
                 continue;
 
-            boolean useInjection = TypeElementUtils.hasUseInjectionAnnotation(typeInterfaceElement)
-                    || TypeElementUtils.hasUseInjectionAnnotation(bindClassType);
+            boolean useInjection = AnnotationUtils.hasUseInjectionAnnotation(typeInterfaceElement)
+                    || AnnotationUtils.hasUseInjectionAnnotation(bindClassType);
 
             List<?> typeArguments = MoreTypes.asDeclared(typeInterface).getTypeArguments();
             TypeMirror[] typeMirrors = new TypeMirror[typeArguments.size()];
@@ -75,8 +75,8 @@ public class CompositionUtils {
         return specs;
     }
 
-    public static ClassName getNestedCompositionClassName(TypeElement typeElement, Elements utils) {
-        String name = TypeElementUtils.getCompositionName(typeElement, utils);
+    public static ClassName getNestedCompositionClassName(TypeElement typeElement, ProcessingEnvironment env) {
+        String name = AnnotationUtils.getCompositionName(typeElement, env);
         ClassName nested = ClassName.get(MoreElements.getPackage(typeElement).toString(), name, "Composition");
 
         return nested;
@@ -84,7 +84,7 @@ public class CompositionUtils {
 
     public static TypeName getInheritedCompositionInterface(TypeElement typeElement, ProcessingEnvironment env) {
         ClassName composition = ClassName.get(IComposition.class);
-        ClassName nested = getNestedCompositionClassName(typeElement, env.getElementUtils());
+        ClassName nested = getNestedCompositionClassName(typeElement, env);
 
         return ParameterizedTypeName.get(composition, nested);
     }
