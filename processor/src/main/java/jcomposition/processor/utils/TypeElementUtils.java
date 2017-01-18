@@ -2,134 +2,177 @@ package jcomposition.processor.utils;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.code.Type;
-import com.sun.tools.javac.code.Types;
-import jcomposition.api.Const;
-import jcomposition.api.annotations.Bind;
-import jcomposition.api.annotations.Composition;
-import jcomposition.api.annotations.UseInjection;
+import com.google.auto.common.Visibility;
+import jcomposition.processor.types.ExecutableElementContainer;
+import jcomposition.processor.types.RelationShipResult;
+import jcomposition.processor.types.TypeElementContainer;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.ElementFilter;
-import javax.lang.model.util.Elements;
-import javax.tools.Diagnostic;
-import java.lang.annotation.Annotation;
-import java.lang.annotation.IncompleteAnnotationException;
+import java.util.*;
 
-public class TypeElementUtils {
+import static jcomposition.processor.utils.Util.addValueToMapList;
 
-    public static String getCompositionName(TypeElement element, Elements utils) {
-        Optional<AnnotationValue> value = getParameterFrom(element, Composition.class, "name", utils);
-        String defaultName = element.getSimpleName() + "_Generated";
+public final class TypeElementUtils {
 
-        if (value.isPresent()) {
-            String name = (String) value.get().getValue();
+    /**
+     * Get Map of public and protected methods with @ShareProtected annotation.
+     * Map entry represent format like [{@link Visibility#PUBLIC} - {@link List&lt;ExecutableElement&gt;}]
+     * @see {@link jcomposition.api.annotations.ShareProtected}
+     * @param element element from methods will be extracted
+     * @param env {@link ProcessingEnvironment}
+     * @return Map
+     */
+    private static Map<Visibility, ? extends List<ExecutableElement>> getVisibleExecutableElements(TypeElement element, ProcessingEnvironment env) {
+        HashMap<Visibility, List<ExecutableElement>> map = new HashMap<Visibility, List<ExecutableElement>>();
 
-            if (!Const.UNDEFINED.equals(name)) {
-                return name;
+        // Initialize
+        for (Visibility v : Visibility.values()) {
+            addValueToMapList(v, null, map);
+        }
+
+        List<? extends Element> allMembers = env
+                .getElementUtils()
+                .getAllMembers(element);
+
+        boolean shareProtected = AnnotationUtils.hasShareProtectedAnnotation(element);
+
+        // Get only public and protected methods with @ShareProtected annotation.
+        for (Element member : allMembers) {
+            if (member.getKind() != ElementKind.METHOD)
+                continue;
+
+            // Skip methods from link java.lang.Object
+            if (member.getEnclosingElement().equals(env.getElementUtils().getTypeElement(Object.class.getName()))) {
+                continue;
+            }
+
+            ExecutableElement executableMember = MoreElements.asExecutable(member);
+            Set<Modifier> modifiers = executableMember.getModifiers();
+
+            // skip non valid methods
+            if (modifiers.contains(Modifier.FINAL) || modifiers.contains(Modifier.STATIC))
+                continue;
+
+            if (modifiers.contains(Modifier.PROTECTED)) {
+                if (shareProtected || AnnotationUtils.hasShareProtectedAnnotation(executableMember)) {
+                    addValueToMapList(Visibility.PROTECTED, executableMember, map);
+                }
+            } else if (modifiers.contains(Modifier.PUBLIC)) {
+                addValueToMapList(Visibility.PUBLIC, executableMember, map);
             }
         }
 
-        return defaultName;
+        return map;
     }
 
-    public static Composition.MergeConflictPolicy getCompositionMergeConflictPolicy(TypeElement element, Elements utils) {
-        Optional<AnnotationValue> value = getParameterFrom(element, Composition.class, "onConflict", utils);
 
-        if (value.isPresent()) {
-            Symbol.VarSymbol vs = (Symbol.VarSymbol) value.get().getValue();
+    /**
+     * Finds method in executableElements and gets a relationship between them
+     * @param method
+     * @param executableElements
+     * @param containing
+     * @param env
+     * @return relationship
+     */
+    private static RelationShipResult findRelation(ExecutableElement method,
+                                                   List<ExecutableElement> executableElements,
+                                                   TypeElement containing, ProcessingEnvironment env) {
+        boolean found = false;
+        TypeElementContainer.ExecutableRelationShip relationShip = TypeElementContainer.ExecutableRelationShip.Nothing;
 
-            return Enum.valueOf(Composition.MergeConflictPolicy.class, vs.getSimpleName().toString());
-        }
-
-        throw new IncompleteAnnotationException(Composition.class, "onConflict");
-    }
-
-    public static TypeElement getBindClassType(TypeElement element, ProcessingEnvironment environment) {
-        Optional<AnnotationValue> value = getParameterFrom(element
-                , Bind.class
-                , "value"
-                , environment.getElementUtils());
-
-        if (value.isPresent()) {
-            TypeElement typeElement = MoreTypes.asTypeElement((Type) value.get().getValue());
-            AnnotationMirror bindMirror = MoreElements.getAnnotationMirror(typeElement, Bind.class).orNull();
-
-            if (!typeElement.getKind().isClass() || isAbstract(typeElement)) {
-                environment.getMessager().printMessage(Diagnostic.Kind.ERROR
-                        , "Bind's annotation value must be kind of non-abstract class"
-                        , element
-                        , bindMirror
-                        , value.get());
-
-                return null;
+        for (ExecutableElement element : executableElements) {
+            if (env.getElementUtils().overrides(element, method, containing)) {
+                relationShip = TypeElementContainer.ExecutableRelationShip.Overriding;
+                found = true;
+            } else if (env.getElementUtils().hides(element, method)) {
+                relationShip = TypeElementContainer.ExecutableRelationShip.Hiding;
+                found = true;
             }
 
-            /**
-             * Bind annotation is not valid if Bind's class value isn't implements element interface
-             */
-            javax.lang.model.util.Types types = environment.getTypeUtils();
-
-            if (!types.isAssignable(types.getDeclaredType(typeElement), types.getDeclaredType(element))
-                    && !types.isAssignable(typeElement.getSuperclass(), element.asType())) {
-                environment.getMessager().printMessage(Diagnostic.Kind.ERROR
-                        , "Bind's annotation value class must implement " + element.getSimpleName() + " interface"
-                        , element
-                        , bindMirror
-                        , value.get());
-
-                return null;
+            if (found) {
+                break;
             }
-
-            return typeElement;
         }
 
-        return null;
+        return new RelationShipResult(found, relationShip);
     }
 
-    public static boolean hasUseInjectionAnnotation(TypeElement element) {
-        return MoreElements.isAnnotationPresent(element, UseInjection.class);
-    }
+    private static void processElements(List<ExecutableElement> elementsFromInterface,
+                                 List<ExecutableElement> elementsFromBind,
+                                 TypeElement intf,
+                                 TypeElement bind,
+                                 Map<ExecutableElementContainer, List<TypeElementContainer>> map,
+                                 ProcessingEnvironment env) {
+        for (ExecutableElement method : elementsFromInterface) {
+            ExecutableElementContainer container = new ExecutableElementContainer(method, env.getTypeUtils());
+            RelationShipResult result = findRelation(method, elementsFromBind, bind, env);
+            DeclaredType dt = MoreTypes.asDeclared(intf.asType());
+            TypeElementContainer typeElementContainer = new TypeElementContainer(bind, dt, result.getRelationShip());
 
-    public static boolean hasInheritedInjectionAnnotation(TypeElement element) {
-        if (hasUseInjectionAnnotation(element))
-            return true;
+            addValueToMapList(container, null, map);
 
-        for (TypeMirror typeInterface : element.getInterfaces()) {
-            TypeElement asElement = MoreTypes.asTypeElement(typeInterface);
-
-            if (hasUseInjectionAnnotation(asElement))
-                return true;
+            if (result.isDuplicateFound()) {
+                addValueToMapList(container, typeElementContainer, map);
+            }
         }
 
-        return false;
+        // Priority to interface's methods.
+        if (elementsFromInterface.size() > 0)
+            return;
+
+        for (ExecutableElement method : elementsFromBind) {
+            ExecutableElementContainer container = new ExecutableElementContainer(method, env.getTypeUtils());
+            RelationShipResult result = findRelation(method, elementsFromBind, bind, env);
+            DeclaredType dt = getDeclaredType(intf, bind, env);
+            TypeElementContainer typeElementContainer = new TypeElementContainer(bind, dt, result.getRelationShip());
+
+            addValueToMapList(container, typeElementContainer, map);
+        }
     }
 
-    private static Optional<AnnotationValue> getParameterFrom(TypeElement typeElement
-            , Class<? extends Annotation> annotationClass
-            , String paramName
-            , Elements utils) {
-        Optional<AnnotationMirror> annotationMirror = MoreElements.getAnnotationMirror(typeElement, annotationClass);
+    private static DeclaredType getDeclaredType(TypeElement intf, TypeElement bind, ProcessingEnvironment env) {
+        TypeMirror[] params = new TypeMirror[intf.getTypeParameters().size()];
 
-        if (annotationMirror.isPresent()) {
-            AnnotationValue value = AnnotationUtils.getAnnotationValue(annotationMirror.get(), paramName, utils);
-
-            return Optional.fromNullable(value);
+        for (int i = 0; i < params.length; i++) {
+            params[i] = intf.getTypeParameters().get(i).asType();
         }
 
-        return Optional.absent();
+        return env.getTypeUtils().getDeclaredType(bind, params);
     }
 
-    private static boolean isAbstract(TypeElement typeElement) {
-        Predicate<Element> predicate = MoreElements.hasModifiers(Modifier.ABSTRACT);
+    /**
+     * Get list of executable elements and list of overriders
+     * @param element
+     * @param env
+     * @return map
+     */
+    public static Map<ExecutableElementContainer, List<TypeElementContainer>> getMethodsMap(TypeElement element, ProcessingEnvironment env) {
+        HashMap<ExecutableElementContainer, List<TypeElementContainer>> map = new HashMap<ExecutableElementContainer, List<TypeElementContainer>>();
 
-        return predicate.apply(typeElement);
+        Map<Visibility, ? extends List<ExecutableElement>> executableElements = getVisibleExecutableElements(element, env);
+
+        for (TypeMirror mirror : element.getInterfaces()) {
+            TypeElement typeInterfaceElement = MoreTypes.asTypeElement(mirror);
+            TypeElement bindClassType = AnnotationUtils.getBindClassType(typeInterfaceElement, env);
+
+            if (bindClassType == null)
+                continue;
+
+            Map<Visibility, ? extends List<ExecutableElement>> executableElementBind = getVisibleExecutableElements(bindClassType, env);
+
+            processElements(executableElements.get(Visibility.PUBLIC),
+                    executableElementBind.get(Visibility.PUBLIC),
+                    element, bindClassType, map, env);
+
+            processElements(Collections.<ExecutableElement>emptyList(),
+                    executableElementBind.get(Visibility.PROTECTED),
+                    element, bindClassType, map, env);
+
+        }
+
+        return map;
     }
 }

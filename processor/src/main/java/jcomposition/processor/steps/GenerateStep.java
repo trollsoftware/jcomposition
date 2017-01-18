@@ -20,11 +20,15 @@ package jcomposition.processor.steps;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
+import com.google.auto.common.SuperficialValidation;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.*;
 import jcomposition.api.annotations.Composition;
+import jcomposition.processor.types.ExecutableElementContainer;
+import jcomposition.processor.types.TypeElementContainer;
+import jcomposition.processor.utils.AnnotationUtils;
 import jcomposition.processor.utils.CompositionUtils;
 import jcomposition.processor.utils.TypeElementUtils;
 
@@ -33,7 +37,6 @@ import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.ElementFilter;
 import javax.tools.Diagnostic;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -53,16 +56,48 @@ public class GenerateStep extends AbstractStep {
 
     @Override
     public Set<Element> process(SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
+        ImmutableSet.Builder<Element> elementsForLaterProcessing = ImmutableSet.builder();
         for (Map.Entry<Class<? extends Annotation>, Element> entry : elementsByAnnotation.entries()) {
             if (!entry.getValue().getKind().isInterface()) {
                 getProcessingEnv().getMessager().printMessage(Diagnostic.Kind.ERROR, entry.getKey().getName()
                         + " annotation can be used only with interfaces", entry.getValue());
             }
 
-            generate(MoreElements.asType(entry.getValue()));
+            Element value = entry.getValue();
+
+            if (validate(value)) {
+                generate(MoreElements.asType(value));
+            } else {
+                elementsForLaterProcessing.add(value);
+            }
         }
 
-        return Collections.emptySet();
+        return elementsForLaterProcessing.build();
+    }
+
+    private boolean validate(Element element) {
+        TypeElement typeElement = MoreElements.asType(element);
+
+        for (TypeMirror superInterface : typeElement.getInterfaces()) {
+            if (!validateInterface(superInterface)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean validateInterface(TypeMirror typeMirror) {
+        TypeElement bindClassType = AnnotationUtils.getBindClassType(MoreTypes.asTypeElement(typeMirror), getProcessingEnv());
+        if (bindClassType == null) {
+            return true;
+        }
+
+        if (!SuperficialValidation.validateElement(bindClassType)) {
+            return false;
+        }
+
+        return true;
     }
 
     private void generate(TypeElement typeElement) {
@@ -88,14 +123,11 @@ public class GenerateStep extends AbstractStep {
     }
 
     private TypeSpec getTypeSpec(TypeElement typeElement) {
-        ImmutableSet<ExecutableElement> methods = MoreElements.getLocalAndInheritedMethods(typeElement,
-                getProcessingEnv().getElementUtils());
-        // Validate Bind's annotation
-        TypeElementUtils.getBindClassType(typeElement, getProcessingEnv());
+        Map<ExecutableElementContainer, List<TypeElementContainer>> methodsMap = TypeElementUtils.getMethodsMap(typeElement, getProcessingEnv());
 
-        String compositionName = TypeElementUtils.getCompositionName(typeElement, getProcessingEnv().getElementUtils());
-        Composition.MergeConflictPolicy mergeConflictPolicy = TypeElementUtils.getCompositionMergeConflictPolicy(
-                typeElement, getProcessingEnv().getElementUtils());
+        String compositionName = AnnotationUtils.getCompositionName(typeElement, getProcessingEnv());
+        Composition.MergeConflictPolicy mergeConflictPolicy = AnnotationUtils.getCompositionMergeConflictPolicy(
+                typeElement, getProcessingEnv());
 
         TypeSpec.Builder specBuilder = TypeSpec.classBuilder(compositionName)
                 .addSuperinterface(TypeName.get(typeElement.asType()))
@@ -103,14 +135,14 @@ public class GenerateStep extends AbstractStep {
                 .addTypeVariables(getTypeParameters(typeElement))
                 .addModifiers(Modifier.PUBLIC)
                 .addType(CompositionUtils.getCompositionTypeSpec(typeElement, getProcessingEnv()))
-                .addMethods(getMethodSpecs(methods, typeElement, mergeConflictPolicy))
+                .addMethods(getMethodSpecs(methodsMap, typeElement, mergeConflictPolicy))
                 .addMethod(CompositionUtils.getCompositeMethodSpec(typeElement, getProcessingEnv()))
                 .addField(CompositionUtils.getCompositeFieldSpec(typeElement));
 
-        if (TypeElementUtils.hasInheritedInjectionAnnotation(typeElement)) {
+        if (AnnotationUtils.hasInheritedInjectionAnnotation(typeElement)) {
             isAbstract = true;
 
-            ClassName nestedCompositionClassName = CompositionUtils.getNestedCompositionClassName(typeElement, getProcessingEnv().getElementUtils());
+            ClassName nestedCompositionClassName = CompositionUtils.getNestedCompositionClassName(typeElement, getProcessingEnv());
             TypeName nestedCompositionTypeClassName = TypeVariableName.get(nestedCompositionClassName.simpleName());
 
             specBuilder.addMethod(MethodSpec.methodBuilder("onInject")
@@ -127,12 +159,9 @@ public class GenerateStep extends AbstractStep {
         return specBuilder.build();
     }
 
-    private MethodSpec getMethodSpec(ExecutableElement executableElement, TypeElement typeElement, Composition.MergeConflictPolicy policy) {
-        DeclaredType declaredType = MoreTypes.asDeclared(typeElement.asType());
-
-        MethodSpec.Builder builder = MethodSpec.overriding(executableElement, declaredType, getProcessingEnv().getTypeUtils());
-
-        List<TypeElement> overriders = getListOverridersExecutable(executableElement, typeElement);
+    private MethodSpec getMethodSpec(Map.Entry<ExecutableElementContainer, List<TypeElementContainer>> entry, TypeElement typeElement, Composition.MergeConflictPolicy policy) {
+        ExecutableElement executableElement = entry.getKey().getExecutableElement();
+        List<TypeElementContainer> overriders = entry.getValue();
 
         if (overriders.size() == 0)
             return null;
@@ -143,11 +172,23 @@ public class GenerateStep extends AbstractStep {
             return null;
         }
 
+        /**
+         * FIXME: maybe take the first element is not exactly correct?
+         */
+        TypeElementContainer container = overriders.get(0);
+
+        DeclaredType declaredType = container.getDeclaredType();
+        MethodSpec.Builder builder = MethodSpecUtils.getBuilder(executableElement, declaredType, getProcessingEnv().getTypeUtils());
+
+        if (container.getRelationShip() == TypeElementContainer.ExecutableRelationShip.Overriding) {
+            builder.addAnnotation(Override.class);
+        }
+
         boolean useFirst = executableElement.getReturnType().getKind() != TypeKind.VOID
                 || (hasMergeConflict && policy == Composition.MergeConflictPolicy.UseFirst);
 
-        for (TypeElement overrider : overriders) {
-            String statement = getExecutableStatement(executableElement, overrider);
+        for (TypeElementContainer overrider : overriders) {
+            String statement = getExecutableStatement(executableElement, overrider.getTypeElement());
 
             if (statement != null) {
                 builder.addStatement(statement);
@@ -160,11 +201,11 @@ public class GenerateStep extends AbstractStep {
         return builder.build();
     }
 
-    private List<MethodSpec> getMethodSpecs(Iterable<ExecutableElement> elements, TypeElement typeElement, Composition.MergeConflictPolicy policy) {
+    private List<MethodSpec> getMethodSpecs(Map<ExecutableElementContainer, List<TypeElementContainer>> methodsMap, TypeElement typeElement, Composition.MergeConflictPolicy policy) {
         List<MethodSpec> result = new ArrayList<MethodSpec>();
 
-        for (ExecutableElement element : elements) {
-            MethodSpec spec = getMethodSpec(element, typeElement, policy);
+        for (Map.Entry<ExecutableElementContainer, List<TypeElementContainer>> entry : methodsMap.entrySet()) {
+            MethodSpec spec = getMethodSpec(entry, typeElement, policy);
 
             if (spec != null) {
                 result.add(spec);
@@ -174,24 +215,6 @@ public class GenerateStep extends AbstractStep {
         }
 
         return result;
-    }
-
-    private List<TypeElement> getListOverridersExecutable(ExecutableElement executableElement, TypeElement typeElement) {
-        List<TypeElement> overriders = new ArrayList<TypeElement>();
-
-        for (TypeMirror typeMirror : typeElement.getInterfaces()) {
-            TypeElement currentTypeElement = MoreTypes.asTypeElement(typeMirror);
-            List<? extends Element> allMembers = getProcessingEnv()
-                    .getElementUtils()
-                    .getAllMembers(currentTypeElement);
-            List<? extends ExecutableElement> methods = ElementFilter.methodsIn(allMembers);
-
-            if (methods.contains(executableElement)) {
-                overriders.add(currentTypeElement);
-            }
-        }
-
-        return overriders;
     }
 
     private String getParametersScope(ExecutableElement element) {
@@ -213,17 +236,12 @@ public class GenerateStep extends AbstractStep {
 
     private String getExecutableStatement(ExecutableElement executableElement, TypeElement overrider) {
         StringBuilder builder = new StringBuilder();
-        TypeElement bindClassType = TypeElementUtils.getBindClassType(overrider, getProcessingEnv());
-
-        if (bindClassType == null) {
-            return null;
-        }
 
         if (executableElement.getReturnType().getKind() != TypeKind.VOID) {
             builder.append("return ");
         }
 
-        builder.append("getComposition().composition_" + bindClassType.getSimpleName()
+        builder.append("getComposition().composition_" + overrider.getSimpleName()
                 + "." + executableElement.getSimpleName() + "(" + getParametersScope(executableElement) + ")");
 
         return builder.toString();
