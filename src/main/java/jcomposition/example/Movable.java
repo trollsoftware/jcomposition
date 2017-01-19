@@ -14,15 +14,15 @@ public class Movable implements IMovable {
 
     @Module
     public static final class MovableModule {
-//        private GameObjectWithInjection.Composition composition;
-//
-//        public MovableModule(GameObjectWithInjection.Composition composition) {
-//            this.composition = composition;
-//        }
-//
-//        @Provides
-//        public Movable provideMovable() {
-//            return composition.new Composition_Movable();
-//        }
+        private GameObjectWithInjection.Composition composition;
+
+        public MovableModule(GameObjectWithInjection.Composition composition) {
+            this.composition = composition;
+        }
+
+        @Provides
+        public Movable provideMovable() {
+            return composition.new Composition_Movable();
+        }
     }
 }

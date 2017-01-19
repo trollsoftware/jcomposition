@@ -11,5 +11,5 @@ import javax.inject.Singleton;
         Movable.MovableModule.class
 })
 public interface InjectionComponent {
-    //void inject(GameObjectWithInjection.Composition composition);
+    void inject(GameObjectWithInjection.Composition composition);
 }
