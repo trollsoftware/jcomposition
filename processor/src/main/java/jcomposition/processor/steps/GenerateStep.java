@@ -134,7 +134,7 @@ public class GenerateStep extends AbstractStep {
                 .addSuperinterface(CompositionUtils.getInheritedCompositionInterface(typeElement, getProcessingEnv()))
                 .addTypeVariables(getTypeParameters(typeElement))
                 .addModifiers(Modifier.PUBLIC)
-                .addType(CompositionUtils.getCompositionTypeSpec(typeElement, getProcessingEnv()))
+                .addType(CompositionUtils.getCompositionTypeSpec(methodsMap, typeElement, getProcessingEnv()))
                 .addMethods(getMethodSpecs(methodsMap, typeElement, mergeConflictPolicy))
                 .addMethod(CompositionUtils.getCompositeMethodSpec(typeElement, getProcessingEnv()))
                 .addField(CompositionUtils.getCompositeFieldSpec(typeElement));
@@ -242,7 +242,7 @@ public class GenerateStep extends AbstractStep {
         }
 
         builder.append("getComposition().composition_" + overrider.getSimpleName()
-                + "." + executableElement.getSimpleName() + "(" + getParametersScope(executableElement) + ")");
+                + "._super_" + executableElement.getSimpleName() + "(" + getParametersScope(executableElement) + ")");
 
         return builder.toString();
     }

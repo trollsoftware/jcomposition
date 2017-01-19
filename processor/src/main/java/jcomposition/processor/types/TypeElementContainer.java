@@ -1,7 +1,11 @@
 package jcomposition.processor.types;
 
+import com.google.common.base.Objects;
+
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+
+import jcomposition.processor.utils.AnnotationUtils;
 
 public class TypeElementContainer {
     public enum ExecutableRelationShip {
@@ -16,15 +20,26 @@ public class TypeElementContainer {
     private TypeElement typeElement;
     private DeclaredType declaredType;
     private ExecutableRelationShip relationShip;
+    private boolean useInjection;
 
-    public TypeElementContainer(TypeElement typeElement, DeclaredType declaredType) {
+    public TypeElementContainer(TypeElement typeElement, DeclaredType declaredType, boolean useInjection) {
         this.typeElement = typeElement;
         this.declaredType = declaredType;
+        this.useInjection = useInjection;
     }
 
-    public TypeElementContainer(TypeElement typeElement, DeclaredType declaredType, ExecutableRelationShip relationShip) {
-        this(typeElement, declaredType);
+    public TypeElementContainer(TypeElement typeElement, DeclaredType declaredType, boolean useInjection,
+                                ExecutableRelationShip relationShip) {
+        this(typeElement, declaredType, useInjection);
         this.relationShip = relationShip;
+    }
+
+    public boolean hasUseInjection() {
+        return useInjection;
+    }
+
+    public void setUseInjection(boolean useInjection) {
+        this.useInjection = useInjection;
     }
 
     public ExecutableRelationShip getRelationShip() {
@@ -58,5 +73,18 @@ public class TypeElementContainer {
                 ", declaredType=" + declaredType +
                 ", relationShip=" + relationShip +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TypeElementContainer that = (TypeElementContainer) o;
+        return Objects.equal(typeElement, that.typeElement);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(typeElement);
     }
 }

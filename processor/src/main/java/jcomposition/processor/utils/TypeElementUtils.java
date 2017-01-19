@@ -11,6 +11,8 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import javax.tools.Diagnostic;
+
 import java.util.*;
 
 import static jcomposition.processor.utils.Util.addValueToMapList;
@@ -101,16 +103,17 @@ public final class TypeElementUtils {
     }
 
     private static void processElements(List<ExecutableElement> elementsFromInterface,
-                                 List<ExecutableElement> elementsFromBind,
-                                 TypeElement intf,
-                                 TypeElement bind,
-                                 Map<ExecutableElementContainer, List<TypeElementContainer>> map,
-                                 ProcessingEnvironment env) {
+                                        List<ExecutableElement> elementsFromBind,
+                                        TypeElement intf,
+                                        TypeElement bind,
+                                        Map<ExecutableElementContainer, List<TypeElementContainer>> map,
+                                        boolean intfInjected,
+                                        ProcessingEnvironment env) {
         for (ExecutableElement method : elementsFromInterface) {
             ExecutableElementContainer container = new ExecutableElementContainer(method, env.getTypeUtils());
             RelationShipResult result = findRelation(method, elementsFromBind, bind, env);
             DeclaredType dt = MoreTypes.asDeclared(intf.asType());
-            TypeElementContainer typeElementContainer = new TypeElementContainer(bind, dt, result.getRelationShip());
+            TypeElementContainer typeElementContainer = new TypeElementContainer(bind, dt, intfInjected, result.getRelationShip());
 
             addValueToMapList(container, null, map);
 
@@ -127,7 +130,7 @@ public final class TypeElementUtils {
             ExecutableElementContainer container = new ExecutableElementContainer(method, env.getTypeUtils());
             RelationShipResult result = findRelation(method, elementsFromBind, bind, env);
             DeclaredType dt = getDeclaredType(intf, bind, env);
-            TypeElementContainer typeElementContainer = new TypeElementContainer(bind, dt, result.getRelationShip());
+            TypeElementContainer typeElementContainer = new TypeElementContainer(bind, dt, intfInjected, result.getRelationShip());
 
             addValueToMapList(container, typeElementContainer, map);
         }
@@ -153,23 +156,26 @@ public final class TypeElementUtils {
         HashMap<ExecutableElementContainer, List<TypeElementContainer>> map = new HashMap<ExecutableElementContainer, List<TypeElementContainer>>();
 
         Map<Visibility, ? extends List<ExecutableElement>> executableElements = getVisibleExecutableElements(element, env);
-
+        env.getMessager().printMessage(Diagnostic.Kind.NOTE, "ELEMENT: " +element);
         for (TypeMirror mirror : element.getInterfaces()) {
+            env.getMessager().printMessage(Diagnostic.Kind.NOTE, "-----------: " +mirror);
             TypeElement typeInterfaceElement = MoreTypes.asTypeElement(mirror);
             TypeElement bindClassType = AnnotationUtils.getBindClassType(typeInterfaceElement, env);
 
             if (bindClassType == null)
                 continue;
 
+            boolean hasInjectAnnotation = AnnotationUtils.hasUseInjectionAnnotation(typeInterfaceElement);
+
             Map<Visibility, ? extends List<ExecutableElement>> executableElementBind = getVisibleExecutableElements(bindClassType, env);
 
             processElements(executableElements.get(Visibility.PUBLIC),
                     executableElementBind.get(Visibility.PUBLIC),
-                    element, bindClassType, map, env);
+                    element, bindClassType, map, hasInjectAnnotation, env);
 
             processElements(Collections.<ExecutableElement>emptyList(),
                     executableElementBind.get(Visibility.PROTECTED),
-                    element, bindClassType, map, env);
+                    element, bindClassType, map, hasInjectAnnotation, env);
 
         }
 
