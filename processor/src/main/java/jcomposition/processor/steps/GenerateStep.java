@@ -27,7 +27,7 @@ import com.google.common.collect.Sets;
 import com.squareup.javapoet.*;
 import jcomposition.api.annotations.Composition;
 import jcomposition.processor.types.ExecutableElementContainer;
-import jcomposition.processor.types.TypeElementContainer;
+import jcomposition.processor.types.TypeElementPairContainer;
 import jcomposition.processor.utils.AnnotationUtils;
 import jcomposition.processor.utils.CompositionUtils;
 import jcomposition.processor.utils.TypeElementUtils;
@@ -123,7 +123,7 @@ public class GenerateStep extends AbstractStep {
     }
 
     private TypeSpec getTypeSpec(TypeElement typeElement) {
-        Map<ExecutableElementContainer, List<TypeElementContainer>> methodsMap = TypeElementUtils.getMethodsMap(typeElement, getProcessingEnv());
+        Map<ExecutableElementContainer, List<TypeElementPairContainer>> methodsMap = TypeElementUtils.getMethodsMap(typeElement, getProcessingEnv());
 
         String compositionName = AnnotationUtils.getCompositionName(typeElement, getProcessingEnv());
         Composition.MergeConflictPolicy mergeConflictPolicy = AnnotationUtils.getCompositionMergeConflictPolicy(
@@ -134,7 +134,7 @@ public class GenerateStep extends AbstractStep {
                 .addSuperinterface(CompositionUtils.getInheritedCompositionInterface(typeElement, getProcessingEnv()))
                 .addTypeVariables(getTypeParameters(typeElement))
                 .addModifiers(Modifier.PUBLIC)
-                .addType(CompositionUtils.getCompositionTypeSpec(typeElement, getProcessingEnv()))
+                .addType(CompositionUtils.getCompositionTypeSpec(methodsMap, typeElement, getProcessingEnv()))
                 .addMethods(getMethodSpecs(methodsMap, typeElement, mergeConflictPolicy))
                 .addMethod(CompositionUtils.getCompositeMethodSpec(typeElement, getProcessingEnv()))
                 .addField(CompositionUtils.getCompositeFieldSpec(typeElement));
@@ -159,9 +159,9 @@ public class GenerateStep extends AbstractStep {
         return specBuilder.build();
     }
 
-    private MethodSpec getMethodSpec(Map.Entry<ExecutableElementContainer, List<TypeElementContainer>> entry, TypeElement typeElement, Composition.MergeConflictPolicy policy) {
+    private MethodSpec getMethodSpec(Map.Entry<ExecutableElementContainer, List<TypeElementPairContainer>> entry, TypeElement typeElement, Composition.MergeConflictPolicy policy) {
         ExecutableElement executableElement = entry.getKey().getExecutableElement();
-        List<TypeElementContainer> overriders = entry.getValue();
+        List<TypeElementPairContainer> overriders = entry.getValue();
 
         if (overriders.size() == 0)
             return null;
@@ -175,20 +175,20 @@ public class GenerateStep extends AbstractStep {
         /**
          * FIXME: maybe take the first element is not exactly correct?
          */
-        TypeElementContainer container = overriders.get(0);
+        TypeElementPairContainer container = overriders.get(0);
 
         DeclaredType declaredType = container.getDeclaredType();
         MethodSpec.Builder builder = MethodSpecUtils.getBuilder(executableElement, declaredType, getProcessingEnv().getTypeUtils());
 
-        if (container.getRelationShip() == TypeElementContainer.ExecutableRelationShip.Overriding) {
+        if (container.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Overriding) {
             builder.addAnnotation(Override.class);
         }
 
         boolean useFirst = executableElement.getReturnType().getKind() != TypeKind.VOID
                 || (hasMergeConflict && policy == Composition.MergeConflictPolicy.UseFirst);
 
-        for (TypeElementContainer overrider : overriders) {
-            String statement = getExecutableStatement(executableElement, overrider.getTypeElement());
+        for (TypeElementPairContainer overrider : overriders) {
+            String statement = getExecutableStatement(executableElement, overrider.getBind());
 
             if (statement != null) {
                 builder.addStatement(statement);
@@ -201,10 +201,10 @@ public class GenerateStep extends AbstractStep {
         return builder.build();
     }
 
-    private List<MethodSpec> getMethodSpecs(Map<ExecutableElementContainer, List<TypeElementContainer>> methodsMap, TypeElement typeElement, Composition.MergeConflictPolicy policy) {
+    private List<MethodSpec> getMethodSpecs(Map<ExecutableElementContainer, List<TypeElementPairContainer>> methodsMap, TypeElement typeElement, Composition.MergeConflictPolicy policy) {
         List<MethodSpec> result = new ArrayList<MethodSpec>();
 
-        for (Map.Entry<ExecutableElementContainer, List<TypeElementContainer>> entry : methodsMap.entrySet()) {
+        for (Map.Entry<ExecutableElementContainer, List<TypeElementPairContainer>> entry : methodsMap.entrySet()) {
             MethodSpec spec = getMethodSpec(entry, typeElement, policy);
 
             if (spec != null) {
@@ -242,7 +242,7 @@ public class GenerateStep extends AbstractStep {
         }
 
         builder.append("getComposition().composition_" + overrider.getSimpleName()
-                + "." + executableElement.getSimpleName() + "(" + getParametersScope(executableElement) + ")");
+                + "._super_" + executableElement.getSimpleName() + "(" + getParametersScope(executableElement) + ")");
 
         return builder.toString();
     }

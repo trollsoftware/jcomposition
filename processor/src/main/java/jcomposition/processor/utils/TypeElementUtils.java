@@ -5,12 +5,14 @@ import com.google.auto.common.MoreTypes;
 import com.google.auto.common.Visibility;
 import jcomposition.processor.types.ExecutableElementContainer;
 import jcomposition.processor.types.RelationShipResult;
-import jcomposition.processor.types.TypeElementContainer;
+import jcomposition.processor.types.TypeElementPairContainer;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import javax.tools.Diagnostic;
+
 import java.util.*;
 
 import static jcomposition.processor.utils.Util.addValueToMapList;
@@ -81,14 +83,14 @@ public final class TypeElementUtils {
                                                    List<ExecutableElement> executableElements,
                                                    TypeElement containing, ProcessingEnvironment env) {
         boolean found = false;
-        TypeElementContainer.ExecutableRelationShip relationShip = TypeElementContainer.ExecutableRelationShip.Nothing;
+        TypeElementPairContainer.ExecutableRelationShip relationShip = TypeElementPairContainer.ExecutableRelationShip.Nothing;
 
         for (ExecutableElement element : executableElements) {
             if (env.getElementUtils().overrides(element, method, containing)) {
-                relationShip = TypeElementContainer.ExecutableRelationShip.Overriding;
+                relationShip = TypeElementPairContainer.ExecutableRelationShip.Overriding;
                 found = true;
             } else if (env.getElementUtils().hides(element, method)) {
-                relationShip = TypeElementContainer.ExecutableRelationShip.Hiding;
+                relationShip = TypeElementPairContainer.ExecutableRelationShip.Hiding;
                 found = true;
             }
 
@@ -101,21 +103,24 @@ public final class TypeElementUtils {
     }
 
     private static void processElements(List<ExecutableElement> elementsFromInterface,
-                                 List<ExecutableElement> elementsFromBind,
-                                 TypeElement intf,
-                                 TypeElement bind,
-                                 Map<ExecutableElementContainer, List<TypeElementContainer>> map,
-                                 ProcessingEnvironment env) {
+                                        List<ExecutableElement> elementsFromBind,
+                                        TypeElement baseIntf,
+                                        TypeElement concreteIntf,
+                                        TypeElement bind,
+                                        Map<ExecutableElementContainer, List<TypeElementPairContainer>> map,
+                                        boolean intfInjected,
+                                        ProcessingEnvironment env) {
+        DeclaredType baseDt = MoreTypes.asDeclared(baseIntf.asType());
         for (ExecutableElement method : elementsFromInterface) {
             ExecutableElementContainer container = new ExecutableElementContainer(method, env.getTypeUtils());
             RelationShipResult result = findRelation(method, elementsFromBind, bind, env);
-            DeclaredType dt = MoreTypes.asDeclared(intf.asType());
-            TypeElementContainer typeElementContainer = new TypeElementContainer(bind, dt, result.getRelationShip());
+
+            TypeElementPairContainer typeElementPairContainer = new TypeElementPairContainer(concreteIntf, bind, baseDt, intfInjected, result.getRelationShip());
 
             addValueToMapList(container, null, map);
 
             if (result.isDuplicateFound()) {
-                addValueToMapList(container, typeElementContainer, map);
+                addValueToMapList(container, typeElementPairContainer, map);
             }
         }
 
@@ -123,23 +128,13 @@ public final class TypeElementUtils {
         if (elementsFromInterface.size() > 0)
             return;
 
+        DeclaredType concreteDt = Util.getDeclaredType(baseDt, concreteIntf, bind, env);
         for (ExecutableElement method : elementsFromBind) {
             ExecutableElementContainer container = new ExecutableElementContainer(method, env.getTypeUtils());
-            DeclaredType dt = getDeclaredType(intf, bind, env);
-            TypeElementContainer typeElementContainer = new TypeElementContainer(bind, dt, TypeElementContainer.ExecutableRelationShip.Nothing);
+            TypeElementPairContainer typeElementPairContainer = new TypeElementPairContainer(concreteIntf, bind, concreteDt, intfInjected, TypeElementPairContainer.ExecutableRelationShip.Nothing);
 
-            addValueToMapList(container, typeElementContainer, map);
+            addValueToMapList(container, typeElementPairContainer, map);
         }
-    }
-
-    private static DeclaredType getDeclaredType(TypeElement intf, TypeElement bind, ProcessingEnvironment env) {
-        TypeMirror[] params = new TypeMirror[intf.getTypeParameters().size()];
-
-        for (int i = 0; i < params.length; i++) {
-            params[i] = intf.getTypeParameters().get(i).asType();
-        }
-
-        return env.getTypeUtils().getDeclaredType(bind, params);
     }
 
     /**
@@ -148,11 +143,10 @@ public final class TypeElementUtils {
      * @param env
      * @return map
      */
-    public static Map<ExecutableElementContainer, List<TypeElementContainer>> getMethodsMap(TypeElement element, ProcessingEnvironment env) {
-        HashMap<ExecutableElementContainer, List<TypeElementContainer>> map = new HashMap<ExecutableElementContainer, List<TypeElementContainer>>();
+    public static Map<ExecutableElementContainer, List<TypeElementPairContainer>> getMethodsMap(TypeElement element, ProcessingEnvironment env) {
+        HashMap<ExecutableElementContainer, List<TypeElementPairContainer>> map = new HashMap<ExecutableElementContainer, List<TypeElementPairContainer>>();
 
         Map<Visibility, ? extends List<ExecutableElement>> executableElements = getVisibleExecutableElements(element, env);
-
         for (TypeMirror mirror : element.getInterfaces()) {
             TypeElement typeInterfaceElement = MoreTypes.asTypeElement(mirror);
             TypeElement bindClassType = AnnotationUtils.getBindClassType(typeInterfaceElement, env);
@@ -160,15 +154,17 @@ public final class TypeElementUtils {
             if (bindClassType == null)
                 continue;
 
+            boolean hasInjectAnnotation = AnnotationUtils.hasUseInjectionAnnotation(typeInterfaceElement);
+
             Map<Visibility, ? extends List<ExecutableElement>> executableElementBind = getVisibleExecutableElements(bindClassType, env);
 
             processElements(executableElements.get(Visibility.PUBLIC),
                     executableElementBind.get(Visibility.PUBLIC),
-                    element, bindClassType, map, env);
+                    element, typeInterfaceElement, bindClassType, map, hasInjectAnnotation, env);
 
             processElements(Collections.<ExecutableElement>emptyList(),
                     executableElementBind.get(Visibility.PROTECTED),
-                    element, bindClassType, map, env);
+                    element, typeInterfaceElement, bindClassType, map, hasInjectAnnotation, env);
 
         }
 

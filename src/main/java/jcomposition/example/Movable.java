@@ -1,7 +1,5 @@
 package jcomposition.example;
 
-import dagger.Module;
-import dagger.Provides;
 import jcomposition.example.interfaces.IMovable;
 
 public class Movable implements IMovable {
@@ -11,11 +9,5 @@ public class Movable implements IMovable {
         return false;
     }
 
-    @Module
-    public static final class MovableModule {
-        @Provides
-        public Movable provideMovable() {
-            return new Movable();
-        }
-    }
+
 }
