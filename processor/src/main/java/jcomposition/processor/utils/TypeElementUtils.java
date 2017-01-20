@@ -131,8 +131,7 @@ public final class TypeElementUtils {
         DeclaredType concreteDt = Util.getDeclaredType(baseDt, concreteIntf, bind, env);
         for (ExecutableElement method : elementsFromBind) {
             ExecutableElementContainer container = new ExecutableElementContainer(method, env.getTypeUtils());
-            RelationShipResult result = findRelation(method, elementsFromInterface, bind, env);
-            TypeElementPairContainer typeElementPairContainer = new TypeElementPairContainer(concreteIntf, bind, concreteDt, intfInjected, result.getRelationShip());
+            TypeElementPairContainer typeElementPairContainer = new TypeElementPairContainer(concreteIntf, bind, concreteDt, intfInjected, TypeElementPairContainer.ExecutableRelationShip.Nothing);
 
             addValueToMapList(container, typeElementPairContainer, map);
         }
