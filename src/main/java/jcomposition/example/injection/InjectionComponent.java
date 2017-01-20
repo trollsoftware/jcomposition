@@ -1,14 +1,13 @@
 package jcomposition.example.injection;
 
 import dagger.Component;
-import jcomposition.api.IComposition;
-import jcomposition.example.Movable;
+import jcomposition.example.MovableModule;
 
 import javax.inject.Singleton;
 
 @Singleton
 @Component(modules = {
-        Movable.MovableModule.class
+        MovableModule.class
 })
 public interface InjectionComponent {
     void inject(GameObjectWithInjection.Composition composition);
