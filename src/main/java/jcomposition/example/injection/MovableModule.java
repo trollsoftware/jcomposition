@@ -1,4 +1,4 @@
-package jcomposition.example;
+package jcomposition.example.injection;
 
 import dagger.Module;
 import dagger.Provides;

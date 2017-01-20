@@ -2,9 +2,9 @@ package jcomposition.processor.types;
 
 public class RelationShipResult {
     private boolean duplicateFound;
-    private TypeElementContainer.ExecutableRelationShip relationShip;
+    private TypeElementPairContainer.ExecutableRelationShip relationShip;
 
-    public RelationShipResult(boolean duplicateFound, TypeElementContainer.ExecutableRelationShip relationShip) {
+    public RelationShipResult(boolean duplicateFound, TypeElementPairContainer.ExecutableRelationShip relationShip) {
         this.duplicateFound = duplicateFound;
         this.relationShip = relationShip;
     }
@@ -17,11 +17,11 @@ public class RelationShipResult {
         this.duplicateFound = duplicateFound;
     }
 
-    public TypeElementContainer.ExecutableRelationShip getRelationShip() {
+    public TypeElementPairContainer.ExecutableRelationShip getRelationShip() {
         return relationShip;
     }
 
-    public void setRelationShip(TypeElementContainer.ExecutableRelationShip relationShip) {
+    public void setRelationShip(TypeElementPairContainer.ExecutableRelationShip relationShip) {
         this.relationShip = relationShip;
     }
 }

@@ -4,7 +4,7 @@ import com.google.auto.common.MoreElements;
 import com.squareup.javapoet.*;
 import jcomposition.api.IComposition;
 import jcomposition.processor.types.ExecutableElementContainer;
-import jcomposition.processor.types.TypeElementContainer;
+import jcomposition.processor.types.TypeElementPairContainer;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.inject.Inject;
@@ -20,7 +20,7 @@ import java.util.Map;
 public final class CompositionUtils {
 
      public static TypeSpec getCompositionTypeSpec(Map<ExecutableElementContainer,
-             List<TypeElementContainer>> methodsMap, TypeElement typeElement, ProcessingEnvironment env) {
+             List<TypeElementPairContainer>> methodsMap, TypeElement typeElement, ProcessingEnvironment env) {
          TypeSpec.Builder builder = TypeSpec.classBuilder("Composition");
          builder.addModifiers(Modifier.FINAL, Modifier.PUBLIC);
 
@@ -41,34 +41,34 @@ public final class CompositionUtils {
      }
 
     private static HashMap<FieldSpec, TypeSpec> getFieldsSpecs(Map<ExecutableElementContainer,
-            List<TypeElementContainer>> methodsMap, TypeElement typeElement, ProcessingEnvironment env) {
+            List<TypeElementPairContainer>> methodsMap, TypeElement typeElement, ProcessingEnvironment env) {
         String compositionName = AnnotationUtils.getCompositionName(typeElement, env);
-        HashMap<TypeElementContainer, TypeSpec.Builder> typeBuilders = new HashMap<TypeElementContainer, TypeSpec.Builder>();
+        HashMap<TypeElementPairContainer, TypeSpec.Builder> typeBuilders = new HashMap<TypeElementPairContainer, TypeSpec.Builder>();
         HashMap<FieldSpec, TypeSpec> specs = new HashMap<FieldSpec, TypeSpec>();
 
-        for (Map.Entry<ExecutableElementContainer, List<TypeElementContainer>> entry : methodsMap.entrySet()) {
+        for (Map.Entry<ExecutableElementContainer, List<TypeElementPairContainer>> entry : methodsMap.entrySet()) {
             if (entry.getValue().isEmpty()) continue;
 
-            for (TypeElementContainer eContainer : entry.getValue()) {
+            for (TypeElementPairContainer eContainer : entry.getValue()) {
                 TypeSpec.Builder tBuilder = typeBuilders.get(eContainer);
                 if (tBuilder == null) {
-                    tBuilder = getFieldTypeBuilder(eContainer.getTypeElement(), eContainer.hasUseInjection());
+                    tBuilder = getFieldTypeBuilder(eContainer, env);
                 }
                 tBuilder.addMethods(getShareMethodSpecs(entry, compositionName, env));
                 typeBuilders.put(eContainer, tBuilder);
             }
         }
-        for (Map.Entry<TypeElementContainer, TypeSpec.Builder> entry : typeBuilders.entrySet()) {
+        for (Map.Entry<TypeElementPairContainer, TypeSpec.Builder> entry : typeBuilders.entrySet()) {
             TypeSpec typeSpec = entry.getValue().build();
             specs.put(getFieldSpec(entry.getKey(), typeSpec), typeSpec);
         }
         return specs;
     }
 
-    private static FieldSpec getFieldSpec(TypeElementContainer elementContainer, TypeSpec typeSpec) {
+    private static FieldSpec getFieldSpec(TypeElementPairContainer elementContainer, TypeSpec typeSpec) {
         String initializer = elementContainer.hasUseInjection() ? "null" : "new " + typeSpec.name + "()";
         FieldSpec.Builder specBuilder = FieldSpec.builder(ClassName.bestGuess(typeSpec.name),
-                "composition_" + elementContainer.getTypeElement().getSimpleName())
+                "composition_" + elementContainer.getBind().getSimpleName())
                 .addModifiers(Modifier.PROTECTED)
                 .initializer(initializer);
         if (elementContainer.hasUseInjection()) {
@@ -77,13 +77,19 @@ public final class CompositionUtils {
         return specBuilder.build();
     }
 
-    private static TypeSpec.Builder getFieldTypeBuilder(TypeElement bindClassType, boolean isInjected) {
+    private static TypeSpec.Builder getFieldTypeBuilder(TypeElementPairContainer container, ProcessingEnvironment env) {
+        DeclaredType baseDt = container.getDeclaredType();
+        TypeElement bindClassType = container.getBind();
+        TypeElement concreteIntf = container.getIntf();
+        boolean isInjected = container.hasUseInjection();
+
+        DeclaredType dt = Util.getDeclaredType(baseDt, concreteIntf, bindClassType, env);
         return TypeSpec.classBuilder("Composition_" + bindClassType.getSimpleName())
                 .addModifiers(Modifier.FINAL, isInjected ? Modifier.PUBLIC : Modifier.PROTECTED)
-                .superclass(TypeName.get(bindClassType.asType()));
+                .superclass(TypeName.get(dt));
     }
 
-    private static List<MethodSpec> getShareMethodSpecs(Map.Entry<ExecutableElementContainer, List<TypeElementContainer>> entry, String compositionName, ProcessingEnvironment env) {
+    private static List<MethodSpec> getShareMethodSpecs(Map.Entry<ExecutableElementContainer, List<TypeElementPairContainer>> entry, String compositionName, ProcessingEnvironment env) {
         List<MethodSpec> result = new ArrayList<MethodSpec>();
 
         ExecutableElement executableElement = entry.getKey().getExecutableElement();

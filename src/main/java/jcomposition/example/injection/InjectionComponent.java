@@ -1,7 +1,6 @@
 package jcomposition.example.injection;
 
 import dagger.Component;
-import jcomposition.example.MovableModule;
 
 import javax.inject.Singleton;
 

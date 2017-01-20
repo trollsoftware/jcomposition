@@ -1,7 +1,5 @@
 package jcomposition.example.injection;
 
-import jcomposition.example.MovableModule;
-
 public class GameObjectWithInjection extends GameObjectWithInjectionBase {
     private InjectionComponent injectionComponent;
 

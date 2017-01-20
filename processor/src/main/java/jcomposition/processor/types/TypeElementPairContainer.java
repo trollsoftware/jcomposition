@@ -5,9 +5,7 @@ import com.google.common.base.Objects;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 
-import jcomposition.processor.utils.AnnotationUtils;
-
-public class TypeElementContainer {
+public class TypeElementPairContainer {
     public enum ExecutableRelationShip {
         /**
          * There is no hiding or overriding relationship between executable and type element.
@@ -17,20 +15,22 @@ public class TypeElementContainer {
         Hiding
     }
 
-    private TypeElement typeElement;
+    private TypeElement intf;
+    private TypeElement bind;
     private DeclaredType declaredType;
     private ExecutableRelationShip relationShip;
     private boolean useInjection;
 
-    public TypeElementContainer(TypeElement typeElement, DeclaredType declaredType, boolean useInjection) {
-        this.typeElement = typeElement;
+    public TypeElementPairContainer(TypeElement intf, TypeElement bind, DeclaredType declaredType, boolean useInjection) {
+        this.intf = intf;
+        this.bind = bind;
         this.declaredType = declaredType;
         this.useInjection = useInjection;
     }
 
-    public TypeElementContainer(TypeElement typeElement, DeclaredType declaredType, boolean useInjection,
-                                ExecutableRelationShip relationShip) {
-        this(typeElement, declaredType, useInjection);
+    public TypeElementPairContainer(TypeElement intf, TypeElement bind, DeclaredType declaredType, boolean useInjection,
+                                    ExecutableRelationShip relationShip) {
+        this(intf, bind, declaredType, useInjection);
         this.relationShip = relationShip;
     }
 
@@ -50,12 +50,20 @@ public class TypeElementContainer {
         this.relationShip = relationShip;
     }
 
-    public TypeElement getTypeElement() {
-        return typeElement;
+    public TypeElement getIntf() {
+        return intf;
     }
 
-    public void setTypeElement(TypeElement typeElement) {
-        this.typeElement = typeElement;
+    public void setIntf(TypeElement intf) {
+        this.intf = intf;
+    }
+
+    public TypeElement getBind() {
+        return bind;
+    }
+
+    public void setBind(TypeElement bind) {
+        this.bind = bind;
     }
 
     public DeclaredType getDeclaredType() {
@@ -68,8 +76,8 @@ public class TypeElementContainer {
 
     @Override
     public String toString() {
-        return "TypeElementContainer{" +
-                "typeElement=" + typeElement +
+        return "TypeElementPairContainer{" +
+                "intf=" + intf +
                 ", declaredType=" + declaredType +
                 ", relationShip=" + relationShip +
                 '}';
@@ -79,12 +87,12 @@ public class TypeElementContainer {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        TypeElementContainer that = (TypeElementContainer) o;
-        return Objects.equal(typeElement, that.typeElement);
+        TypeElementPairContainer that = (TypeElementPairContainer) o;
+        return Objects.equal(intf, that.intf);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(typeElement);
+        return Objects.hashCode(intf);
     }
 }

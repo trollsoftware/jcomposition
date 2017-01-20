@@ -38,11 +38,6 @@ public class AnnotationProcessor extends BasicAnnotationProcessor {
     }
 
     @Override
-    protected void postRound(RoundEnvironment roundEnv) {
-        super.postRound(roundEnv);
-    }
-
-    @Override
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.RELEASE_6;
     }
