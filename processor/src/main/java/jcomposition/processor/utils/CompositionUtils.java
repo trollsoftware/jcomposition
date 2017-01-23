@@ -101,6 +101,12 @@ public final class CompositionUtils {
         builder.addStatement(statement);
         MethodSpec spec = builder.build();
 
+        result.add(spec);
+
+        if (entry.getKey().isAbstract()) {
+            return result;
+        }
+
         MethodSpec.Builder _builder = MethodSpec.methodBuilder("_super_" + executableElement.getSimpleName().toString())
                 .addModifiers(Modifier.PROTECTED)
                 .addParameters(spec.parameters)
@@ -108,7 +114,6 @@ public final class CompositionUtils {
         String _statement = getShareExecutableStatement(executableElement);
 
         _builder.addStatement(_statement);
-        result.add(spec);
         result.add(_builder.build());
         return result;
     }

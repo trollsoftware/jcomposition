@@ -47,7 +47,7 @@ public class Util {
         }
     }
 
-    public static boolean isAbstract(TypeElement typeElement) {
+    public static boolean isAbstract(Element typeElement) {
         Predicate<Element> predicate = MoreElements.hasModifiers(Modifier.ABSTRACT);
 
         return predicate.apply(typeElement);

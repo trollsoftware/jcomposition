@@ -8,9 +8,19 @@ public class ExecutableElementContainer {
     private ExecutableElement executableElement;
     private Types types;
 
+    private boolean isAbstract;
+
     public ExecutableElementContainer(ExecutableElement executableElement, Types types) {
         this.executableElement = executableElement;
         this.types = types;
+    }
+
+    public boolean isAbstract() {
+        return isAbstract;
+    }
+
+    public void setAbstract(boolean anAbstract) {
+        isAbstract = anAbstract;
     }
 
     public ExecutableElement getExecutableElement() {

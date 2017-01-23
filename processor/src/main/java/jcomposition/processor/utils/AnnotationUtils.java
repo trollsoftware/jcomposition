@@ -73,9 +73,9 @@ public final class AnnotationUtils {
             TypeElement typeElement = MoreTypes.asTypeElement((Type) value.get().getValue());
             AnnotationMirror bindMirror = MoreElements.getAnnotationMirror(typeElement, Bind.class).orNull();
 
-            if (!typeElement.getKind().isClass() || isAbstract(typeElement)) {
+            if (!typeElement.getKind().isClass()) {
                 env.getMessager().printMessage(Diagnostic.Kind.ERROR
-                        , "Bind's annotation value must be kind of non-abstract class"
+                        , "Bind's annotation value must be class"
                         , element
                         , bindMirror
                         , value.get());

@@ -4,6 +4,11 @@ public class GameObjectWithInjection extends GameObjectWithInjectionBase {
     private InjectionComponent injectionComponent;
 
     @Override
+    protected void onMove() {
+        System.out.println("OnMove()");
+    }
+
+    @Override
     protected void onInject(Composition composition) {
         injectionComponent = DaggerInjectionComponent
                 .builder()

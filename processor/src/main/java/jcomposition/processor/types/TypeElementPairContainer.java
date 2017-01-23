@@ -11,6 +11,7 @@ public class TypeElementPairContainer {
          * There is no hiding or overriding relationship between executable and type element.
          */
         Nothing,
+        Same,
         Overriding,
         Hiding
     }
