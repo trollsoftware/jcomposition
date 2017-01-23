@@ -160,7 +160,8 @@ public class GenerateStep extends AbstractStep {
     }
 
     private MethodSpec getMethodSpec(Map.Entry<ExecutableElementContainer, List<TypeElementPairContainer>> entry, TypeElement typeElement, Composition.MergeConflictPolicy policy) {
-        ExecutableElement executableElement = entry.getKey().getExecutableElement();
+        ExecutableElementContainer executableContainer = entry.getKey();
+        ExecutableElement executableElement = executableContainer.getExecutableElement();
         List<TypeElementPairContainer> overriders = entry.getValue();
 
         if (overriders.size() == 0)
@@ -180,22 +181,27 @@ public class GenerateStep extends AbstractStep {
         DeclaredType declaredType = container.getDeclaredType();
         MethodSpec.Builder builder = MethodSpecUtils.getBuilder(executableElement, declaredType, getProcessingEnv().getTypeUtils());
 
-        if (container.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Overriding) {
+        if (container.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Overriding
+                || container.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Same) {
             builder.addAnnotation(Override.class);
         }
 
-        boolean useFirst = executableElement.getReturnType().getKind() != TypeKind.VOID
-                || (hasMergeConflict && policy == Composition.MergeConflictPolicy.UseFirst);
+        if (!executableContainer.isAbstract()) {
+            boolean useFirst = executableElement.getReturnType().getKind() != TypeKind.VOID
+                    || (hasMergeConflict && policy == Composition.MergeConflictPolicy.UseFirst);
 
-        for (TypeElementPairContainer overrider : overriders) {
-            String statement = getExecutableStatement(executableElement, overrider.getBind());
+            for (TypeElementPairContainer overrider : overriders) {
+                String statement = getExecutableStatement(executableElement, overrider.getBind());
 
-            if (statement != null) {
-                builder.addStatement(statement);
+                if (statement != null) {
+                    builder.addStatement(statement);
+                }
+                if (useFirst) {
+                    break;
+                }
             }
-            if (useFirst) {
-                break;
-            }
+        } else {
+            builder.addModifiers(Modifier.ABSTRACT);
         }
 
         return builder.build();
