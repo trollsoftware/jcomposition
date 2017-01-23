@@ -26,6 +26,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.*;
 import jcomposition.api.annotations.Composition;
+import jcomposition.api.annotations.ShareProtected;
 import jcomposition.processor.types.ExecutableElementContainer;
 import jcomposition.processor.types.TypeElementPairContainer;
 import jcomposition.processor.utils.AnnotationUtils;
@@ -182,6 +183,8 @@ public class GenerateStep extends AbstractStep {
 
         if (container.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Overriding) {
             builder.addAnnotation(Override.class);
+        } else if (executableElement.getModifiers().contains(Modifier.PROTECTED)){
+            builder.addAnnotation(ShareProtected.class);
         }
 
         boolean useFirst = executableElement.getReturnType().getKind() != TypeKind.VOID
