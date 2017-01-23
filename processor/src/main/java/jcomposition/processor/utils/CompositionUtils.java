@@ -54,7 +54,7 @@ public final class CompositionUtils {
                 if (tBuilder == null) {
                     tBuilder = getFieldTypeBuilder(eContainer, env);
                 }
-                tBuilder.addMethods(getShareMethodSpecs(entry, compositionName, env));
+                tBuilder.addMethods(getShareMethodSpecs(eContainer, entry.getKey(), compositionName, env));
                 typeBuilders.put(eContainer, tBuilder);
             }
         }
@@ -89,11 +89,11 @@ public final class CompositionUtils {
                 .superclass(TypeName.get(dt));
     }
 
-    private static List<MethodSpec> getShareMethodSpecs(Map.Entry<ExecutableElementContainer, List<TypeElementPairContainer>> entry, String compositionName, ProcessingEnvironment env) {
+    private static List<MethodSpec> getShareMethodSpecs(TypeElementPairContainer tContainer, ExecutableElementContainer eContainer, String compositionName, ProcessingEnvironment env) {
         List<MethodSpec> result = new ArrayList<MethodSpec>();
 
-        ExecutableElement executableElement = entry.getKey().getExecutableElement();
-        DeclaredType declaredType = entry.getValue().get(0).getDeclaredType();
+        ExecutableElement executableElement = eContainer.getExecutableElement();
+        DeclaredType declaredType = tContainer.getDeclaredType();
 
         MethodSpec.Builder builder = MethodSpec.overriding(executableElement, declaredType, env.getTypeUtils());
         String statement = getShareExecutableStatement(executableElement, compositionName + ".this");
@@ -103,7 +103,7 @@ public final class CompositionUtils {
 
         result.add(spec);
 
-        if (entry.getKey().isAbstract()) {
+        if (tContainer.isAbstract()) {
             return result;
         }
 

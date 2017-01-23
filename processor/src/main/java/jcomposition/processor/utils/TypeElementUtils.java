@@ -133,10 +133,12 @@ public final class TypeElementUtils {
             RelationShipResult result = findRelation(method, elementsFromBind, bind, false, env);
 
             if (result.isDuplicateFound()) {
-                container.setAbstract(result.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Same);
                 TypeElementPairContainer typeElementPairContainer = new TypeElementPairContainer(concreteIntf, bind, baseDt, intfInjected, result.getRelationShip());
+                typeElementPairContainer.setAbstract(result.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Same);
 
                 addValueToMapList(container, typeElementPairContainer, map);
+            } else {
+                addValueToMapList(container, null, map);
             }
         }
     }
@@ -157,9 +159,9 @@ public final class TypeElementUtils {
             RelationShipResult result = findRelation(method, elementsFromInterface, baseIntf, true, env);
 
             if (!result.isDuplicateFound()) {
-                container.setAbstract(isAbstract(method)
-                        || result.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Same);
                 TypeElementPairContainer typeElementPairContainer = new TypeElementPairContainer(concreteIntf, bind, concreteDt, intfInjected, result.getRelationShip());
+                typeElementPairContainer.setAbstract(isAbstract(method)
+                        || result.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Same);
 
                 addValueToMapList(container, typeElementPairContainer, map);
             }

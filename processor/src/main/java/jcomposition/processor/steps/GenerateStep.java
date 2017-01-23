@@ -185,27 +185,36 @@ public class GenerateStep extends AbstractStep {
         if (container.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Overriding
                 || container.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Same) {
             builder.addAnnotation(Override.class);
-        } else if (executableElement.getModifiers().contains(Modifier.PROTECTED)){
+        }
+
+        if (executableElement.getModifiers().contains(Modifier.PROTECTED)){
             builder.addAnnotation(ShareProtected.class);
         }
 
-        if (!executableContainer.isAbstract()) {
-            boolean useFirst = executableElement.getReturnType().getKind() != TypeKind.VOID
-                    || (hasMergeConflict && policy == Composition.MergeConflictPolicy.UseFirst);
+        boolean useFirst = executableElement.getReturnType().getKind() != TypeKind.VOID
+                || (hasMergeConflict && policy == Composition.MergeConflictPolicy.UseFirst);
 
-            for (TypeElementPairContainer overrider : overriders) {
-                String statement = getExecutableStatement(executableElement, overrider.getBind());
-
-                if (statement != null) {
-                    builder.addStatement(statement);
-                }
-                if (useFirst) {
-                    break;
-                }
+        int abstractCount = 0;
+        for (TypeElementPairContainer overrider : overriders) {
+            if (overrider.isAbstract()) {
+                abstractCount++;
+                continue;
             }
-        } else {
+
+            String statement = getExecutableStatement(executableElement, overrider.getBind());
+
+            if (statement != null) {
+                builder.addStatement(statement);
+            }
+            if (useFirst) {
+                break;
+            }
+        }
+
+        if (abstractCount == overriders.size()) {
             builder.addModifiers(Modifier.ABSTRACT);
         }
+
 
         return builder.build();
     }
@@ -214,9 +223,13 @@ public class GenerateStep extends AbstractStep {
         List<MethodSpec> result = new ArrayList<MethodSpec>();
 
         for (Map.Entry<ExecutableElementContainer, List<TypeElementPairContainer>> entry : methodsMap.entrySet()) {
+
             MethodSpec spec = getMethodSpec(entry, typeElement, policy);
 
             if (spec != null) {
+                if (spec.hasModifier(Modifier.ABSTRACT)) {
+                    isAbstract = true;
+                }
                 result.add(spec);
             } else {
                 isAbstract = true;

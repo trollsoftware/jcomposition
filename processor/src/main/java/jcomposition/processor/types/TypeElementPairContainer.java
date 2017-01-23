@@ -21,6 +21,7 @@ public class TypeElementPairContainer {
     private DeclaredType declaredType;
     private ExecutableRelationShip relationShip;
     private boolean useInjection;
+    private boolean isAbstract;
 
     public TypeElementPairContainer(TypeElement intf, TypeElement bind, DeclaredType declaredType, boolean useInjection) {
         this.intf = intf;
@@ -33,6 +34,14 @@ public class TypeElementPairContainer {
                                     ExecutableRelationShip relationShip) {
         this(intf, bind, declaredType, useInjection);
         this.relationShip = relationShip;
+    }
+
+    public boolean isAbstract() {
+        return isAbstract;
+    }
+
+    public void setAbstract(boolean anAbstract) {
+        isAbstract = anAbstract;
     }
 
     public boolean hasUseInjection() {
