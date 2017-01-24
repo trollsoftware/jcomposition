@@ -129,7 +129,7 @@ public final class TypeElementUtils {
                                                  ProcessingEnvironment env) {
         DeclaredType baseDt = MoreTypes.asDeclared(baseIntf.asType());
         for (ExecutableElement method : elementsFromInterface) {
-            ExecutableElementContainer container = new ExecutableElementContainer(method, env.getTypeUtils());
+            ExecutableElementContainer container = new ExecutableElementContainer(method, env);
             RelationShipResult result = findRelation(method, elementsFromBind, bind, false, env);
 
             if (result.isDuplicateFound()) {
@@ -155,7 +155,7 @@ public final class TypeElementUtils {
         DeclaredType concreteDt = Util.getDeclaredType(baseDt, concreteIntf, bind, env);
 
         for (ExecutableElement method : elementsFromBind) {
-            ExecutableElementContainer container = new ExecutableElementContainer(method, env.getTypeUtils());
+            ExecutableElementContainer container = new ExecutableElementContainer(method, env);
             RelationShipResult result = findRelation(method, elementsFromInterface, baseIntf, true, env);
 
             if (!result.isDuplicateFound()) {
