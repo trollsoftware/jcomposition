@@ -3,7 +3,7 @@ package jcomposition.example.generics;
 import jcomposition.example.generics.base.RouterBase;
 import jcomposition.example.generics.base.ViewBase;
 
-public class Presenter extends PresenterGenerated<ViewBase, RouterBase>{
+public class Presenter extends SamplePresenterGenerated<ViewBase, RouterBase>{
     @Override
     public void takeView(ViewBase view) {
         System.out.println("Presenter.takeView()");
