@@ -106,12 +106,23 @@ public class Movable implements IMovable {
         System.out.println("I'm moving to (" + x + ", " + y + ")");
         return false;
     }
-    @Module
-    public static final class MovableModule {
-        @Provides
-        public Movable provideMovable() {
-            return new Movable();
-        }
+    
+    @ShareProtected
+    protected abstract void onMove();
+}
+
+// And finally @Module declaration
+@Module
+public final class MovableModule {
+    private GameObjectWithInjection.Composition composition;
+
+    public MovableModule(GameObjectWithInjection.Composition composition) {
+        this.composition = composition;
+    }
+
+    @Provides
+    public GameObjectWithInjectionBase.Composition.Composition_Movable provideMovable()  {
+        return composition.new Composition_Movable();
     }
 }
 ```
@@ -121,16 +132,44 @@ public class GameObjectWithInjection extends GameObjectWithInjectionBase {
     private InjectionComponent injectionComponent;
 
     @Override
+    protected void onMove() {
+        System.out.println("OnMove()");
+    }
+
+    @Override
     protected void onInject(Composition composition) {
         injectionComponent = DaggerInjectionComponent
                 .builder()
-                .movableModule(new Movable.MovableModule())
+                .movableModule(new MovableModule(composition))
                 .build();
 
         injectionComponent.inject(composition);
     }
 }
 ```
+## Diamond Problem
+JComposition allow you to inherit functionality from many instances, and you could get into a situation that two or more components of composition has some equal methods. Here and below I will call such situation as 'merge conflict'.
+To solve merge conflict you could use special option in annotation `@Composition` *onConflict*, which accept enum:
+```java
+    public enum MergeConflictPolicy {
+        /**
+         * Use first overriding method in case of returning non-void value.
+         * Mix methods call that returns nothing (void)
+         */
+        MixVoid,
+        /**
+         * Use first overriding method in case of conflict
+         */
+        UseFirst,
+        /**
+         * Make method abstract in case of conflict.
+         */
+        MakeAbstract
+    }
+```
+
+## Protected modifier
+If you need a protected method in your composition from one of components, you could use `@ShareProtected` annotation and apply it on whole class or exactly method. Example of usage you can find in *Dependency injection* section.
 
 ## Constraints
 If you are not using dependency injection, binded class must have an empty argument constructor.
@@ -152,11 +191,17 @@ allprojects {
 And add the dependency:
 ```
 dependencies {
-    // Use apt for processor instead of compile if you have it
-    compile 'com.github.trollsoftware.jcomposition:processor:1.0'
-    compile 'com.github.trollsoftware.jcomposition:api:1.0'
+    // Use compile for processor instead of apt if you haven't apt dependency.
+    apt 'com.github.trollsoftware.jcomposition:processor:1.1.1'
+    compile 'com.github.trollsoftware.jcomposition:api:1.1.1'
 }
 ```
+
+## Ideas
+1. Support of final class
+2. Check how jcomposition works on java 8-9
+3. Inherit java docs in generated files
+4. Add more documentation and examples
 
 ## License
 This library is distributed under the Apache 2.0 license found in the [LICENSE](./LICENSE) file.
