@@ -17,6 +17,7 @@
 package jcomposition.processor.utils;
 
 import com.google.auto.common.MoreElements;
+import com.google.auto.common.MoreTypes;
 import com.google.common.base.Predicate;
 
 import javax.annotation.processing.ProcessingEnvironment;
@@ -26,6 +27,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import javax.tools.Diagnostic;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -78,6 +80,10 @@ public class Util {
             params[i] = env.getTypeUtils().asMemberOf(baseDt, parameterElement);
         }
 
-        return env.getTypeUtils().getDeclaredType(bind, params);
+        try {
+            return env.getTypeUtils().getDeclaredType(bind, params);
+        } catch (IllegalArgumentException e) {
+            return MoreTypes.asDeclared(bind.asType());
+        }
     }
 }

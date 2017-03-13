@@ -192,16 +192,18 @@ And add the dependency:
 ```
 dependencies {
     // Use compile for processor instead of apt if you haven't apt dependency.
-    apt 'com.github.trollsoftware.jcomposition:processor:1.1.1'
-    compile 'com.github.trollsoftware.jcomposition:api:1.1.1'
+    apt 'com.github.trollsoftware.jcomposition:processor:1.1.2'
+    compile 'com.github.trollsoftware.jcomposition:api:1.1.2'
 }
 ```
 
 ## Ideas
 1. Support of final class
-2. Check how jcomposition works on java 8-9
-3. Inherit java docs in generated files
-4. Add more documentation and examples
+2. Custom constructor support
+3. Optional type casting in advanced generics
+4. Check how jcomposition works on java 8-9
+5. Inherit java docs in generated files
+6. Add more documentation and examples
 
 ## License
 This library is distributed under the Apache 2.0 license found in the [LICENSE](./LICENSE) file.

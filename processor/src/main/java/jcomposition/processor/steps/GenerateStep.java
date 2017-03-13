@@ -177,7 +177,7 @@ public class GenerateStep extends AbstractStep {
          */
         TypeElementPairContainer container = overriders.get(0);
 
-        DeclaredType declaredType = container.getDeclaredType();
+        DeclaredType declaredType = entry.getKey().getDeclaredType();
         MethodSpec.Builder builder = MethodSpecUtils.getBuilder(executableElement, declaredType, getProcessingEnv().getTypeUtils());
 
         if (container.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Overriding

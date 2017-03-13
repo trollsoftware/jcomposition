@@ -109,8 +109,7 @@ public final class CompositionUtils {
         List<MethodSpec> result = new ArrayList<MethodSpec>();
 
         ExecutableElement executableElement = entry.getKey().getExecutableElement();
-        // FIXME: Why 0?
-        DeclaredType declaredType = entry.getValue().get(0).getDeclaredType();
+        DeclaredType declaredType = entry.getKey().getDeclaredType();
 
         MethodSpec.Builder builder = MethodSpec.overriding(executableElement, declaredType, env.getTypeUtils());
         String statement = getShareExecutableStatement(executableElement, compositionName + ".this");
