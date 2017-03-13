@@ -18,6 +18,7 @@ package jcomposition.processor.types;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 
@@ -25,10 +26,12 @@ import java.util.Objects;
 
 public class ExecutableElementContainer {
     private ExecutableElement executableElement;
+    private DeclaredType declaredType;
     private ProcessingEnvironment env;
 
-    public ExecutableElementContainer(ExecutableElement executableElement, ProcessingEnvironment env) {
+    public ExecutableElementContainer(ExecutableElement executableElement, DeclaredType declaredType, ProcessingEnvironment env) {
         this.executableElement = executableElement;
+        this.declaredType = declaredType;
         this.env = env;
     }
 
@@ -38,6 +41,14 @@ public class ExecutableElementContainer {
 
     public void setExecutableElement(ExecutableElement executableElement) {
         this.executableElement = executableElement;
+    }
+
+    public DeclaredType getDeclaredType() {
+        return declaredType;
+    }
+
+    public void setDeclaredType(DeclaredType declaredType) {
+        this.declaredType = declaredType;
     }
 
     @Override
