@@ -96,6 +96,9 @@ public final class TypeElementUtils {
         if (overrider.equals(overridden)) {
             return TypeElementPairContainer.ExecutableRelationShip.Same;
         } else if (els.overrides(overrider, overridden, containing)) {
+            if (isAbstract(overrider)) {
+                return TypeElementPairContainer.ExecutableRelationShip.OverridingAbstract;
+            }
             return TypeElementPairContainer.ExecutableRelationShip.Overriding;
         } else if (els.hides(overrider, overridden)) {
             return TypeElementPairContainer.ExecutableRelationShip.Hiding;
@@ -150,7 +153,8 @@ public final class TypeElementUtils {
 
             if (result.isDuplicateFound()) {
                 TypeElementPairContainer typeElementPairContainer = new TypeElementPairContainer(concreteIntf, bind, baseDt, intfInjected, result.getRelationShip());
-                typeElementPairContainer.setAbstract(result.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Same);
+                typeElementPairContainer.setAbstract(result.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Same
+                        || result.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.OverridingAbstract);
 
                 addValueToMapList(container, typeElementPairContainer, map);
             } else {
