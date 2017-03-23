@@ -146,6 +146,7 @@ public class GenerateStep extends AbstractStep {
 
             specBuilder.addMethod(MethodSpec.methodBuilder("onInject")
                     .addModifiers(Modifier.ABSTRACT, Modifier.PROTECTED)
+                    .addAnnotation(ShareProtected.class)
                     .addParameter(ParameterSpec.builder(nestedCompositionTypeClassName, "composition", Modifier.FINAL)
                             .build())
                     .build());
@@ -180,7 +181,8 @@ public class GenerateStep extends AbstractStep {
         DeclaredType declaredType = entry.getKey().getDeclaredType();
         MethodSpec.Builder builder = MethodSpecUtils.getBuilder(executableElement, declaredType, getProcessingEnv().getTypeUtils());
 
-        if (container.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Overriding
+        if (container.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.OverridingAbstract
+                || container.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Overriding
                 || container.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Same) {
             builder.addAnnotation(Override.class);
         }

@@ -29,6 +29,7 @@ public class TypeElementPairContainer {
         Nothing,
         Same,
         Overriding,
+        OverridingAbstract,
         Hiding
     }
 
@@ -104,8 +105,11 @@ public class TypeElementPairContainer {
     public String toString() {
         return "TypeElementPairContainer{" +
                 "intf=" + intf +
+                ", bind=" + bind +
                 ", declaredType=" + declaredType +
                 ", relationShip=" + relationShip +
+                ", useInjection=" + useInjection +
+                ", isAbstract=" + isAbstract +
                 '}';
     }
 

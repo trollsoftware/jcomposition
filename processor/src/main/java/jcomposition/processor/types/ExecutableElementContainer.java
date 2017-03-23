@@ -72,4 +72,12 @@ public class ExecutableElementContainer {
     public int hashCode() {
         return Objects.hash(executableElement.getSimpleName(), executableElement.getParameters().size());
     }
+
+    @Override
+    public String toString() {
+        return "ExecutableElementContainer{" +
+                "executableElement=" + executableElement +
+                ", declaredType=" + declaredType +
+                '}';
+    }
 }
