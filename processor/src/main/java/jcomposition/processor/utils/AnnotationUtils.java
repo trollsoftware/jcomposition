@@ -19,9 +19,9 @@ package jcomposition.processor.utils;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Optional;
-import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Type;
 import jcomposition.api.Const;
+import jcomposition.api.IMergeConflictPolicy;
 import jcomposition.api.annotations.Bind;
 import jcomposition.api.annotations.Composition;
 import jcomposition.api.annotations.ShareProtected;
@@ -30,13 +30,10 @@ import jcomposition.api.annotations.UseInjection;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.*;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.IncompleteAnnotationException;
 import java.util.Map;
-
-import static jcomposition.processor.utils.Util.isAbstract;
 
 public final class AnnotationUtils {
     public static AnnotationValue getAnnotationValue(AnnotationMirror annotationMirror, String name, ProcessingEnvironment env) {
@@ -67,13 +64,15 @@ public final class AnnotationUtils {
         return defaultName;
     }
 
-    public static Composition.MergeConflictPolicy getCompositionMergeConflictPolicy(TypeElement element, ProcessingEnvironment env) {
+    @SuppressWarnings("unchecked")
+    public static IMergeConflictPolicy getCompositionMergeConflictPolicy(TypeElement element, ProcessingEnvironment env) {
         Optional<AnnotationValue> value = getParameterFrom(element, Composition.class, "onConflict", env);
 
         if (value.isPresent()) {
-            Symbol.VarSymbol vs = (Symbol.VarSymbol) value.get().getValue();
-
-            return Enum.valueOf(Composition.MergeConflictPolicy.class, vs.getSimpleName().toString());
+            TypeElement typeElement = MoreTypes.asTypeElement((Type) value.get().getValue());
+            try {
+                return (IMergeConflictPolicy) Class.forName(typeElement.getQualifiedName().toString()).newInstance();
+            } catch (Exception ignore) { }
         }
 
         throw new IncompleteAnnotationException(Composition.class, "onConflict");

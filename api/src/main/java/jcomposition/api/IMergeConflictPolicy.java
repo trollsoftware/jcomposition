@@ -16,6 +16,18 @@
 
 package jcomposition.api;
 
-public class Const {
-    public final static String UNDEFINED = "[UNDEFINED]";
+import jcomposition.api.types.IExecutableElementContainer;
+import jcomposition.api.types.ITypeElementPairContainer;
+
+import java.util.List;
+
+public interface IMergeConflictPolicy {
+    /**
+     * Applies merge policy to method using list of overriders
+     * @param elementContainer executable element container
+     * @param overriders list of overriders of executable element
+     * @return list of overriders to implement
+     */
+    List<ITypeElementPairContainer> merge(IExecutableElementContainer elementContainer,
+                                          List<ITypeElementPairContainer> overriders);
 }

@@ -23,10 +23,12 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.*;
+import jcomposition.api.IMergeConflictPolicy;
+import jcomposition.api.types.ExecutableRelationShip;
+import jcomposition.api.types.IExecutableElementContainer;
+import jcomposition.api.types.ITypeElementPairContainer;
 import jcomposition.api.annotations.Composition;
 import jcomposition.api.annotations.ShareProtected;
-import jcomposition.processor.types.ExecutableElementContainer;
-import jcomposition.processor.types.TypeElementPairContainer;
 import jcomposition.processor.utils.*;
 
 import javax.annotation.processing.ProcessingEnvironment;
@@ -38,6 +40,9 @@ import javax.tools.Diagnostic;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.*;
+
+import static jcomposition.processor.utils.Util.isAbstract;
+import static jcomposition.processor.utils.Util.isProtected;
 
 public class GenerateStep extends AbstractStep {
     private boolean isAbstract = false;
@@ -120,10 +125,10 @@ public class GenerateStep extends AbstractStep {
     }
 
     private TypeSpec getTypeSpec(TypeElement typeElement) {
-        Map<ExecutableElementContainer, List<TypeElementPairContainer>> methodsMap = TypeElementUtils.getMethodsMap(typeElement, getProcessingEnv());
+        Map<IExecutableElementContainer, List<ITypeElementPairContainer>> methodsMap = TypeElementUtils.getMethodsMap(typeElement, getProcessingEnv());
 
         String compositionName = AnnotationUtils.getCompositionName(typeElement, getProcessingEnv());
-        Composition.MergeConflictPolicy mergeConflictPolicy = AnnotationUtils.getCompositionMergeConflictPolicy(
+        IMergeConflictPolicy mergeConflictPolicy = AnnotationUtils.getCompositionMergeConflictPolicy(
                 typeElement, getProcessingEnv());
 
         TypeSpec.Builder specBuilder = TypeSpec.classBuilder(compositionName)
@@ -157,72 +162,44 @@ public class GenerateStep extends AbstractStep {
         return specBuilder.build();
     }
 
-    private MethodSpec getMethodSpec(Map.Entry<ExecutableElementContainer, List<TypeElementPairContainer>> entry, TypeElement typeElement, Composition.MergeConflictPolicy policy) {
-        ExecutableElementContainer executableContainer = entry.getKey();
+    private MethodSpec getMethodSpec(Map.Entry<IExecutableElementContainer, List<ITypeElementPairContainer>> entry, IMergeConflictPolicy policy) {
+        IExecutableElementContainer executableContainer = entry.getKey();
         ExecutableElement executableElement = executableContainer.getExecutableElement();
-        List<TypeElementPairContainer> overriders = entry.getValue();
+        List<ITypeElementPairContainer> overriders = policy.merge(executableContainer, entry.getValue());
 
-        if (overriders.size() == 0)
-            return null;
-
-        boolean hasMergeConflict = (overriders.size() > 1);
-
-        if (hasMergeConflict && policy == Composition.MergeConflictPolicy.MakeAbstract) {
-            return null;
-        }
-
-        /**
-         * FIXME: maybe take the first element is not exactly correct?
-         */
-        TypeElementPairContainer container = overriders.get(0);
-
-        DeclaredType declaredType = entry.getKey().getDeclaredType();
+        DeclaredType declaredType = executableContainer.getDeclaredType();
         MethodSpec.Builder builder = MethodSpecUtils.getBuilder(executableElement, declaredType, getProcessingEnv().getTypeUtils());
 
-        if (container.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.OverridingAbstract
-                || container.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Overriding
-                || container.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Same) {
-            builder.addAnnotation(Override.class);
-        }
-
-        if (executableElement.getModifiers().contains(Modifier.PROTECTED)){
+        if (isProtected(executableElement)) {
             builder.addAnnotation(ShareProtected.class);
         }
 
-        boolean useFirst = executableElement.getReturnType().getKind() != TypeKind.VOID
-                || (hasMergeConflict && policy == Composition.MergeConflictPolicy.UseFirst);
+        if (overriders.isEmpty()) {
+            if (!executableContainer.hasSuperMethod() && isAbstract(executableElement)) {
+                builder.addModifiers(Modifier.ABSTRACT);
 
-        int abstractCount = 0;
-        for (TypeElementPairContainer overrider : overriders) {
-            if (overrider.isAbstract()) {
-                abstractCount++;
-                continue;
+                return builder.build();
             }
-
-            String statement = getExecutableStatement(executableElement, overrider);
-
-            if (statement != null) {
-                builder.addStatement(statement);
-            }
-            if (useFirst) {
-                break;
-            }
+            return null;
         }
 
-        if (abstractCount == overriders.size()) {
-            builder.addModifiers(Modifier.ABSTRACT);
+        if (executableContainer.hasSuperMethod()) {
+            builder.addAnnotation(Override.class);
         }
 
+        for (ITypeElementPairContainer overrider : overriders) {
+            builder.addStatement(getExecutableStatement(executableElement, overrider));
+        }
 
         return builder.build();
     }
 
-    private List<MethodSpec> getMethodSpecs(Map<ExecutableElementContainer, List<TypeElementPairContainer>> methodsMap, TypeElement typeElement, Composition.MergeConflictPolicy policy) {
+    private List<MethodSpec> getMethodSpecs(Map<IExecutableElementContainer, List<ITypeElementPairContainer>> methodsMap, TypeElement typeElement, IMergeConflictPolicy policy) {
         List<MethodSpec> result = new ArrayList<MethodSpec>();
 
-        for (Map.Entry<ExecutableElementContainer, List<TypeElementPairContainer>> entry : methodsMap.entrySet()) {
+        for (Map.Entry<IExecutableElementContainer, List<ITypeElementPairContainer>> entry : methodsMap.entrySet()) {
 
-            MethodSpec spec = getMethodSpec(entry, typeElement, policy);
+            MethodSpec spec = getMethodSpec(entry, policy);
 
             if (spec != null) {
                 if (spec.hasModifier(Modifier.ABSTRACT)) {
@@ -254,7 +231,7 @@ public class GenerateStep extends AbstractStep {
         return paramBuilder.toString();
     }
 
-    private String getExecutableStatement(ExecutableElement executableElement, TypeElementPairContainer overriderContainer) {
+    private String getExecutableStatement(ExecutableElement executableElement, ITypeElementPairContainer overriderContainer) {
         TypeElement overrider = overriderContainer.getBind();
         StringBuilder builder = new StringBuilder();
 

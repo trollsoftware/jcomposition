@@ -14,24 +14,23 @@
  * limitations under the License.
  */
 
-package jcomposition.example;
+package jcomposition.api.types;
 
-import jcomposition.api.annotations.ShareProtected;
-import jcomposition.example.interfaces.diamond.ICircleEvents;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 
-public class CircleEvents implements ICircleEvents {
-    @Override
-    public void onUpdate() {
-        System.out.println("Circle onUpdate");
-    }
+public interface ITypeElementPairContainer {
+    boolean isAbstract();
 
-    @Override
-    public void onVisibilityChanged(boolean visibility) {
-        System.out.println("Visibility of circle has changed to " + visibility);
-    }
+    boolean isFinal();
 
-    @ShareProtected
-    protected void someProtectedMethod() {
+    boolean hasUseInjection();
 
-    }
+    ExecutableRelationShip getRelationShip();
+
+    TypeElement getIntf();
+
+    TypeElement getBind();
+
+    DeclaredType getDeclaredType();
 }

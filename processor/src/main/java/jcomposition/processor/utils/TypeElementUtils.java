@@ -19,6 +19,10 @@ package jcomposition.processor.utils;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.common.Visibility;
+import jcomposition.api.types.ExecutableRelationShip;
+import jcomposition.api.types.IExecutableElementContainer;
+import jcomposition.api.types.IRelationShipResult;
+import jcomposition.api.types.ITypeElementPairContainer;
 import jcomposition.processor.types.ExecutableElementContainer;
 import jcomposition.processor.types.RelationShipResult;
 import jcomposition.processor.types.TypeElementPairContainer;
@@ -88,20 +92,21 @@ public final class TypeElementUtils {
         return map;
     }
 
-    private static TypeElementPairContainer.ExecutableRelationShip findRelation(ExecutableElement overrider,
-                                                                                ExecutableElement overridden,
-                                                                                TypeElement containing, ProcessingEnvironment env) {
+    private static ExecutableRelationShip findRelation(ExecutableElement overrider,
+                                                       ExecutableElement overridden,
+                                                       TypeElement containing, ProcessingEnvironment env) {
         Elements els = env.getElementUtils();
 
+        // FIXME: Does Same really need?
         if (overrider.equals(overridden)) {
-            return TypeElementPairContainer.ExecutableRelationShip.Same;
+            return ExecutableRelationShip.Same;
         } else if (els.overrides(overrider, overridden, containing)) {
             if (isAbstract(overrider)) {
-                return TypeElementPairContainer.ExecutableRelationShip.OverridingAbstract;
+                return ExecutableRelationShip.OverridingAbstract;
             }
-            return TypeElementPairContainer.ExecutableRelationShip.Overriding;
+            return ExecutableRelationShip.Overriding;
         } else if (els.hides(overrider, overridden)) {
-            return TypeElementPairContainer.ExecutableRelationShip.Hiding;
+            return ExecutableRelationShip.Hiding;
         }
 
         return null;
@@ -116,15 +121,15 @@ public final class TypeElementUtils {
      * @param env
      * @return relationship
      */
-    private static RelationShipResult findRelation(ExecutableElement method,
-                                                   List<ExecutableElement> executableElements,
-                                                   TypeElement containing,
-                                                   boolean reverse,
-                                                   ProcessingEnvironment env) {
+    private static IRelationShipResult findRelation(ExecutableElement method,
+                                                    List<ExecutableElement> executableElements,
+                                                    TypeElement containing,
+                                                    boolean reverse,
+                                                    ProcessingEnvironment env) {
         boolean found = false;
-        TypeElementPairContainer.ExecutableRelationShip relationShip = TypeElementPairContainer.ExecutableRelationShip.Nothing;
+        ExecutableRelationShip relationShip = ExecutableRelationShip.Nothing;
         for (ExecutableElement element : executableElements) {
-            TypeElementPairContainer.ExecutableRelationShip foundRS = (reverse ?
+            ExecutableRelationShip foundRS = (reverse ?
                     findRelation(method, element, containing, env) :
                     findRelation(element, method, containing, env));
             found = (foundRS != null);
@@ -143,24 +148,28 @@ public final class TypeElementUtils {
                                                  TypeElement baseIntf,
                                                  TypeElement concreteIntf,
                                                  TypeElement bind,
-                                                 Map<ExecutableElementContainer, List<TypeElementPairContainer>> map,
+                                                 Map<IExecutableElementContainer, List<ITypeElementPairContainer>> map,
                                                  boolean intfInjected,
                                                  ProcessingEnvironment env) {
         DeclaredType baseDt = MoreTypes.asDeclared(baseIntf.asType());
         for (ExecutableElement method : elementsFromInterface) {
             ExecutableElementContainer container = new ExecutableElementContainer(method, baseDt, env);
-            RelationShipResult result = findRelation(method, elementsFromBind, bind, false, env);
+            IRelationShipResult result = findRelation(method, elementsFromBind, bind, false, env);
 
             if (result.isDuplicateFound()) {
-                TypeElementPairContainer typeElementPairContainer = new TypeElementPairContainer(concreteIntf, bind, baseDt, intfInjected, result.getRelationShip());
-                typeElementPairContainer.setAbstract(result.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Same
-                        || result.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.OverridingAbstract);
+                TypeElementPairContainer typeElementPairContainer = new TypeElementPairContainer(concreteIntf, bind, baseDt);
+                typeElementPairContainer.setAbstract(result.getRelationShip() == ExecutableRelationShip.Same
+                        || result.getRelationShip() == ExecutableRelationShip.OverridingAbstract);
                 typeElementPairContainer.setFinal(isFinal(bind));
+                typeElementPairContainer.setUseInjection(intfInjected);
+                typeElementPairContainer.setRelationShip(result.getRelationShip());
 
-                addValueToMapList(container, typeElementPairContainer, map);
+                addValueToMapList(container, (ITypeElementPairContainer) typeElementPairContainer, map);
             } else {
                 addValueToMapList(container, null, map);
             }
+
+            container.setHasSuperMethod(result.isDuplicateFound());
         }
     }
 
@@ -169,7 +178,7 @@ public final class TypeElementUtils {
                                             TypeElement baseIntf,
                                             TypeElement concreteIntf,
                                             TypeElement bind,
-                                            Map<ExecutableElementContainer, List<TypeElementPairContainer>> map,
+                                            Map<IExecutableElementContainer, List<ITypeElementPairContainer>> map,
                                             boolean intfInjected,
                                             ProcessingEnvironment env) {
         DeclaredType baseDt = MoreTypes.asDeclared(baseIntf.asType());
@@ -177,16 +186,20 @@ public final class TypeElementUtils {
 
         for (ExecutableElement method : elementsFromBind) {
             ExecutableElementContainer container = new ExecutableElementContainer(method, concreteDt, env);
-            RelationShipResult result = findRelation(method, elementsFromInterface, baseIntf, true, env);
+            IRelationShipResult result = findRelation(method, elementsFromInterface, baseIntf, true, env);
 
             if (!result.isDuplicateFound()) {
-                TypeElementPairContainer typeElementPairContainer = new TypeElementPairContainer(concreteIntf, bind, concreteDt, intfInjected, result.getRelationShip());
+                TypeElementPairContainer typeElementPairContainer = new TypeElementPairContainer(concreteIntf, bind, concreteDt);
                 typeElementPairContainer.setAbstract(isAbstract(method)
-                        || result.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Same);
+                        || result.getRelationShip() == ExecutableRelationShip.Same);
                 typeElementPairContainer.setFinal(isFinal(bind));
+                typeElementPairContainer.setUseInjection(intfInjected);
+                typeElementPairContainer.setRelationShip(result.getRelationShip());
 
-                addValueToMapList(container, typeElementPairContainer, map);
+                addValueToMapList(container, (ITypeElementPairContainer) typeElementPairContainer, map);
             }
+
+            container.setHasSuperMethod(result.isDuplicateFound());
         }
     }
 
@@ -196,8 +209,8 @@ public final class TypeElementUtils {
      * @param env
      * @return map
      */
-    public static Map<ExecutableElementContainer, List<TypeElementPairContainer>> getMethodsMap(TypeElement element, ProcessingEnvironment env) {
-        HashMap<ExecutableElementContainer, List<TypeElementPairContainer>> map = new HashMap<ExecutableElementContainer, List<TypeElementPairContainer>>();
+    public static Map<IExecutableElementContainer, List<ITypeElementPairContainer>> getMethodsMap(TypeElement element, ProcessingEnvironment env) {
+        HashMap<IExecutableElementContainer, List<ITypeElementPairContainer>> map = new HashMap<IExecutableElementContainer, List<ITypeElementPairContainer>>();
 
         Map<Visibility, ? extends List<ExecutableElement>> executableElements = getVisibleExecutableElements(element, env);
         for (TypeMirror mirror : element.getInterfaces()) {

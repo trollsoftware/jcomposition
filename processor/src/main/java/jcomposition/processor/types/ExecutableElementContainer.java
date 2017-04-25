@@ -16,6 +16,8 @@
 
 package jcomposition.processor.types;
 
+import jcomposition.api.types.IExecutableElementContainer;
+
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
@@ -24,10 +26,11 @@ import javax.lang.model.util.Types;
 
 import java.util.Objects;
 
-public class ExecutableElementContainer {
+public class ExecutableElementContainer implements IExecutableElementContainer {
     private ExecutableElement executableElement;
     private DeclaredType declaredType;
     private ProcessingEnvironment env;
+    private boolean hasSuperMethod;
 
     public ExecutableElementContainer(ExecutableElement executableElement, DeclaredType declaredType, ProcessingEnvironment env) {
         this.executableElement = executableElement;
@@ -35,20 +38,22 @@ public class ExecutableElementContainer {
         this.env = env;
     }
 
+    @Override
     public ExecutableElement getExecutableElement() {
         return executableElement;
     }
 
-    public void setExecutableElement(ExecutableElement executableElement) {
-        this.executableElement = executableElement;
-    }
-
+    @Override
     public DeclaredType getDeclaredType() {
         return declaredType;
     }
 
-    public void setDeclaredType(DeclaredType declaredType) {
-        this.declaredType = declaredType;
+    public boolean hasSuperMethod() {
+        return hasSuperMethod;
+    }
+
+    public void setHasSuperMethod(boolean hasSuperMethod) {
+        this.hasSuperMethod = hasSuperMethod;
     }
 
     @Override

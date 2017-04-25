@@ -19,8 +19,8 @@ package jcomposition.processor.utils;
 import com.google.auto.common.MoreElements;
 import com.squareup.javapoet.*;
 import jcomposition.api.IComposition;
-import jcomposition.processor.types.ExecutableElementContainer;
-import jcomposition.processor.types.TypeElementPairContainer;
+import jcomposition.api.types.IExecutableElementContainer;
+import jcomposition.api.types.ITypeElementPairContainer;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.inject.Inject;
@@ -32,8 +32,8 @@ import java.util.*;
 
 public final class CompositionUtils {
 
-     public static TypeSpec getCompositionTypeSpec(Map<ExecutableElementContainer,
-             List<TypeElementPairContainer>> methodsMap, TypeElement typeElement, ProcessingEnvironment env) {
+     public static TypeSpec getCompositionTypeSpec(Map<IExecutableElementContainer,
+             List<ITypeElementPairContainer>> methodsMap, TypeElement typeElement, ProcessingEnvironment env) {
          TypeSpec.Builder builder = TypeSpec.classBuilder("Composition");
          builder.addModifiers(Modifier.FINAL, Modifier.PUBLIC);
 
@@ -56,17 +56,17 @@ public final class CompositionUtils {
          return builder.build();
      }
 
-    private static HashMap<FieldSpec, TypeSpec> getFieldsSpecs(Map<ExecutableElementContainer,
-            List<TypeElementPairContainer>> methodsMap, TypeElement typeElement, ProcessingEnvironment env) {
+    private static HashMap<FieldSpec, TypeSpec> getFieldsSpecs(Map<IExecutableElementContainer,
+            List<ITypeElementPairContainer>> methodsMap, TypeElement typeElement, ProcessingEnvironment env) {
         String compositionName = AnnotationUtils.getCompositionName(typeElement, env);
-        HashMap<TypeElementPairContainer, TypeSpec.Builder> typeBuilders = new HashMap<TypeElementPairContainer, TypeSpec.Builder>();
+        HashMap<ITypeElementPairContainer, TypeSpec.Builder> typeBuilders = new HashMap<ITypeElementPairContainer, TypeSpec.Builder>();
         HashMap<FieldSpec, TypeSpec> specs = new HashMap<FieldSpec, TypeSpec>();
-        HashSet<TypeElementPairContainer> finalContainers = new HashSet<TypeElementPairContainer>();
+        HashSet<ITypeElementPairContainer> finalContainers = new HashSet<ITypeElementPairContainer>();
 
-        for (Map.Entry<ExecutableElementContainer, List<TypeElementPairContainer>> entry : methodsMap.entrySet()) {
+        for (Map.Entry<IExecutableElementContainer, List<ITypeElementPairContainer>> entry : methodsMap.entrySet()) {
             if (entry.getValue().isEmpty()) continue;
 
-            for (TypeElementPairContainer eContainer : entry.getValue()) {
+            for (ITypeElementPairContainer eContainer : entry.getValue()) {
                 if (eContainer.isFinal()) {
                     finalContainers.add(eContainer);
                     continue;
@@ -80,12 +80,12 @@ public final class CompositionUtils {
                 typeBuilders.put(eContainer, tBuilder);
             }
         }
-        for (Map.Entry<TypeElementPairContainer, TypeSpec.Builder> entry : typeBuilders.entrySet()) {
+        for (Map.Entry<ITypeElementPairContainer, TypeSpec.Builder> entry : typeBuilders.entrySet()) {
             TypeSpec typeSpec = entry.getValue().build();
             specs.put(getFieldSpec(entry.getKey(), typeSpec), typeSpec);
         }
 
-        for (TypeElementPairContainer finalContainer : finalContainers) {
+        for (ITypeElementPairContainer finalContainer : finalContainers) {
             // No type for final
             specs.put(getFieldSpec(finalContainer, finalContainer.getBind().getQualifiedName().toString()), null);
         }
@@ -93,7 +93,7 @@ public final class CompositionUtils {
         return specs;
     }
 
-    private static FieldSpec getFieldSpec(TypeElementPairContainer elementContainer, String typeName) {
+    private static FieldSpec getFieldSpec(ITypeElementPairContainer elementContainer, String typeName) {
         ClassName bestGuess = ClassName.bestGuess(typeName);
         String initializer = elementContainer.hasUseInjection() ? "null" : "new " + bestGuess.simpleName() + "()";
         FieldSpec.Builder specBuilder = FieldSpec.builder(bestGuess,
@@ -106,11 +106,11 @@ public final class CompositionUtils {
         return specBuilder.build();
     }
 
-    private static FieldSpec getFieldSpec(TypeElementPairContainer elementContainer, TypeSpec typeSpec) {
+    private static FieldSpec getFieldSpec(ITypeElementPairContainer elementContainer, TypeSpec typeSpec) {
         return getFieldSpec(elementContainer, typeSpec.name);
     }
 
-    private static TypeSpec.Builder getFieldTypeBuilder(TypeElementPairContainer container, ProcessingEnvironment env) {
+    private static TypeSpec.Builder getFieldTypeBuilder(ITypeElementPairContainer container, ProcessingEnvironment env) {
         DeclaredType baseDt = container.getDeclaredType();
         TypeElement bindClassType = container.getBind();
         TypeElement concreteIntf = container.getIntf();
@@ -122,7 +122,7 @@ public final class CompositionUtils {
                 .superclass(TypeName.get(dt));
     }
 
-    private static List<MethodSpec> getShareMethodSpecs(TypeElementPairContainer tContainer, Map.Entry<ExecutableElementContainer, List<TypeElementPairContainer>> entry, String compositionName, ProcessingEnvironment env) {
+    private static List<MethodSpec> getShareMethodSpecs(ITypeElementPairContainer tContainer, Map.Entry<IExecutableElementContainer, List<ITypeElementPairContainer>> entry, String compositionName, ProcessingEnvironment env) {
         List<MethodSpec> result = new ArrayList<MethodSpec>();
 
         ExecutableElement executableElement = entry.getKey().getExecutableElement();

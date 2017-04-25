@@ -16,28 +16,25 @@
 
 package jcomposition.processor.types;
 
-public class RelationShipResult {
-    private boolean duplicateFound;
-    private TypeElementPairContainer.ExecutableRelationShip relationShip;
+import jcomposition.api.types.ExecutableRelationShip;
+import jcomposition.api.types.IRelationShipResult;
 
-    public RelationShipResult(boolean duplicateFound, TypeElementPairContainer.ExecutableRelationShip relationShip) {
+public class RelationShipResult implements IRelationShipResult {
+    private boolean duplicateFound;
+    private ExecutableRelationShip relationShip;
+
+    public RelationShipResult(boolean duplicateFound, ExecutableRelationShip relationShip) {
         this.duplicateFound = duplicateFound;
         this.relationShip = relationShip;
     }
 
+    @Override
     public boolean isDuplicateFound() {
         return duplicateFound;
     }
 
-    public void setDuplicateFound(boolean duplicateFound) {
-        this.duplicateFound = duplicateFound;
-    }
-
-    public TypeElementPairContainer.ExecutableRelationShip getRelationShip() {
+    @Override
+    public ExecutableRelationShip getRelationShip() {
         return relationShip;
-    }
-
-    public void setRelationShip(TypeElementPairContainer.ExecutableRelationShip relationShip) {
-        this.relationShip = relationShip;
     }
 }

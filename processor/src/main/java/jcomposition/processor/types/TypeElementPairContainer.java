@@ -17,21 +17,13 @@
 package jcomposition.processor.types;
 
 import com.google.common.base.Objects;
+import jcomposition.api.types.ExecutableRelationShip;
+import jcomposition.api.types.ITypeElementPairContainer;
 
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 
-public class TypeElementPairContainer {
-    public enum ExecutableRelationShip {
-        /**
-         * There is no hiding or overriding relationship between executable and type element.
-         */
-        Nothing,
-        Same,
-        Overriding,
-        OverridingAbstract,
-        Hiding
-    }
+public class TypeElementPairContainer implements ITypeElementPairContainer {
 
     private TypeElement intf;
     private TypeElement bind;
@@ -41,19 +33,13 @@ public class TypeElementPairContainer {
     private boolean isAbstract;
     private boolean isFinal;
 
-    public TypeElementPairContainer(TypeElement intf, TypeElement bind, DeclaredType declaredType, boolean useInjection) {
+    public TypeElementPairContainer(TypeElement intf, TypeElement bind, DeclaredType declaredType) {
         this.intf = intf;
         this.bind = bind;
         this.declaredType = declaredType;
-        this.useInjection = useInjection;
     }
 
-    public TypeElementPairContainer(TypeElement intf, TypeElement bind, DeclaredType declaredType, boolean useInjection,
-                                    ExecutableRelationShip relationShip) {
-        this(intf, bind, declaredType, useInjection);
-        this.relationShip = relationShip;
-    }
-
+    @Override
     public boolean isAbstract() {
         return isAbstract;
     }
@@ -62,6 +48,7 @@ public class TypeElementPairContainer {
         isAbstract = anAbstract;
     }
 
+    @Override
     public boolean isFinal() {
         return isFinal;
     }
@@ -70,6 +57,7 @@ public class TypeElementPairContainer {
         isFinal = aFinal;
     }
 
+    @Override
     public boolean hasUseInjection() {
         return useInjection;
     }
@@ -78,6 +66,7 @@ public class TypeElementPairContainer {
         this.useInjection = useInjection;
     }
 
+    @Override
     public ExecutableRelationShip getRelationShip() {
         return relationShip;
     }
@@ -86,28 +75,19 @@ public class TypeElementPairContainer {
         this.relationShip = relationShip;
     }
 
+    @Override
     public TypeElement getIntf() {
         return intf;
     }
 
-    public void setIntf(TypeElement intf) {
-        this.intf = intf;
-    }
-
+    @Override
     public TypeElement getBind() {
         return bind;
     }
 
-    public void setBind(TypeElement bind) {
-        this.bind = bind;
-    }
-
+    @Override
     public DeclaredType getDeclaredType() {
         return declaredType;
-    }
-
-    public void setDeclaredType(DeclaredType declaredType) {
-        this.declaredType = declaredType;
     }
 
     @Override
