@@ -71,6 +71,12 @@ public class Util {
         return predicate.apply(typeElement);
     }
 
+    public static boolean isProtected(Element typeElement) {
+        Predicate<Element> predicate = MoreElements.hasModifiers(Modifier.PROTECTED);
+
+        return predicate.apply(typeElement);
+    }
+
     public static boolean isFinal(Element typeElement) {
         Predicate<Element> predicate = MoreElements.hasModifiers(Modifier.FINAL);
 

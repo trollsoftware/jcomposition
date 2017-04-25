@@ -41,6 +41,9 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.*;
 
+import static jcomposition.processor.utils.Util.isAbstract;
+import static jcomposition.processor.utils.Util.isProtected;
+
 public class GenerateStep extends AbstractStep {
     private boolean isAbstract = false;
 
@@ -163,21 +166,20 @@ public class GenerateStep extends AbstractStep {
         IExecutableElementContainer executableContainer = entry.getKey();
         ExecutableElement executableElement = executableContainer.getExecutableElement();
         List<ITypeElementPairContainer> overriders = policy.merge(executableContainer, entry.getValue());
+
         DeclaredType declaredType = executableContainer.getDeclaredType();
         MethodSpec.Builder builder = MethodSpecUtils.getBuilder(executableElement, declaredType, getProcessingEnv().getTypeUtils());
 
-        boolean isProtected = executableElement.getModifiers().contains(Modifier.PROTECTED);
-
-        if (isProtected) {
+        if (isProtected(executableElement)) {
             builder.addAnnotation(ShareProtected.class);
         }
 
-        if (overriders.size() == 0) {
-            if (isProtected) {
+        if (overriders.isEmpty()) {
+            if (!executableContainer.hasSuperMethod() && isAbstract(executableElement)) {
                 builder.addModifiers(Modifier.ABSTRACT);
+
                 return builder.build();
             }
-
             return null;
         }
 

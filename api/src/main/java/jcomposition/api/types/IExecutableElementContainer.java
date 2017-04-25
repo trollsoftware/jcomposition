@@ -23,4 +23,6 @@ public interface IExecutableElementContainer {
     ExecutableElement getExecutableElement();
 
     DeclaredType getDeclaredType();
+
+    boolean hasSuperMethod();
 }

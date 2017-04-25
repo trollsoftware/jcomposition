@@ -152,7 +152,7 @@ public final class TypeElementUtils {
                                                  ProcessingEnvironment env) {
         DeclaredType baseDt = MoreTypes.asDeclared(baseIntf.asType());
         for (ExecutableElement method : elementsFromInterface) {
-            IExecutableElementContainer container = new ExecutableElementContainer(method, baseDt, env);
+            ExecutableElementContainer container = new ExecutableElementContainer(method, baseDt, env);
             IRelationShipResult result = findRelation(method, elementsFromBind, bind, false, env);
 
             if (result.isDuplicateFound()) {
@@ -167,6 +167,8 @@ public final class TypeElementUtils {
             } else {
                 addValueToMapList(container, null, map);
             }
+
+            container.setHasSuperMethod(result.isDuplicateFound());
         }
     }
 
@@ -182,7 +184,7 @@ public final class TypeElementUtils {
         DeclaredType concreteDt = Util.getDeclaredType(baseDt, concreteIntf, bind, env);
 
         for (ExecutableElement method : elementsFromBind) {
-            IExecutableElementContainer container = new ExecutableElementContainer(method, concreteDt, env);
+            ExecutableElementContainer container = new ExecutableElementContainer(method, concreteDt, env);
             IRelationShipResult result = findRelation(method, elementsFromInterface, baseIntf, true, env);
 
             if (!result.isDuplicateFound()) {
@@ -195,6 +197,8 @@ public final class TypeElementUtils {
 
                 addValueToMapList(container, (ITypeElementPairContainer) typeElementPairContainer, map);
             }
+
+            container.setHasSuperMethod(result.isDuplicateFound());
         }
     }
 

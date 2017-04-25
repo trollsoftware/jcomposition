@@ -23,4 +23,5 @@ import jcomposition.example.interfaces.IMovable;
 @Bind(Full.class)
 @Composition(name = "FullBase")
 public interface IFull extends IMovable, IPartial {
+    void partialTest();
 }

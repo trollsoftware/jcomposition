@@ -30,6 +30,7 @@ public class ExecutableElementContainer implements IExecutableElementContainer {
     private ExecutableElement executableElement;
     private DeclaredType declaredType;
     private ProcessingEnvironment env;
+    private boolean hasSuperMethod;
 
     public ExecutableElementContainer(ExecutableElement executableElement, DeclaredType declaredType, ProcessingEnvironment env) {
         this.executableElement = executableElement;
@@ -45,6 +46,14 @@ public class ExecutableElementContainer implements IExecutableElementContainer {
     @Override
     public DeclaredType getDeclaredType() {
         return declaredType;
+    }
+
+    public boolean hasSuperMethod() {
+        return hasSuperMethod;
+    }
+
+    public void setHasSuperMethod(boolean hasSuperMethod) {
+        this.hasSuperMethod = hasSuperMethod;
     }
 
     @Override

@@ -32,4 +32,9 @@ public class DrawableFull extends DrawableFullBase {
     protected void onMove() {
 
     }
+
+    @Override
+    public void partialTest() {
+
+    }
 }

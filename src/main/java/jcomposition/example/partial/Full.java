@@ -16,5 +16,11 @@
 
 package jcomposition.example.partial;
 
+import jcomposition.api.annotations.ShareProtected;
+
 public abstract class Full extends FullBase {
+    @ShareProtected
+    protected void testImplementedMethod() {
+
+    }
 }
