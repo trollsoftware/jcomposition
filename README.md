@@ -149,23 +149,11 @@ public class GameObjectWithInjection extends GameObjectWithInjectionBase {
 ```
 ## Diamond Problem
 JComposition allow you to inherit functionality from many instances, and you could get into a situation that two or more components of composition has some equal methods. Here and below I will call such situation as 'merge conflict'.
-To solve merge conflict you could use special option in annotation `@Composition` *onConflict*, which accept enum:
+To solve merge conflict you could use special option in annotation `@Composition` *onConflict*, which accept one of classes below or you own, that implements `IMergeConflictPolicy`:
 ```java
-    public enum MergeConflictPolicy {
-        /**
-         * Use first overriding method in case of returning non-void value.
-         * Mix methods call that returns nothing (void)
-         */
-        MixVoid,
-        /**
-         * Use first overriding method in case of conflict
-         */
-        UseFirst,
-        /**
-         * Make method abstract in case of conflict.
-         */
-        MakeAbstract
-    }
+MakeAbstractPolicy.class
+MixVoidPolicy.class
+UseFirstPolicy.class
 ```
 
 ## Protected modifier
