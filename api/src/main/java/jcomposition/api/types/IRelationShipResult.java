@@ -14,24 +14,10 @@
  * limitations under the License.
  */
 
-package jcomposition.example;
+package jcomposition.api.types;
 
-import jcomposition.api.annotations.ShareProtected;
-import jcomposition.example.interfaces.diamond.ICircleEvents;
+public interface IRelationShipResult {
+    boolean isDuplicateFound();
 
-public class CircleEvents implements ICircleEvents {
-    @Override
-    public void onUpdate() {
-        System.out.println("Circle onUpdate");
-    }
-
-    @Override
-    public void onVisibilityChanged(boolean visibility) {
-        System.out.println("Visibility of circle has changed to " + visibility);
-    }
-
-    @ShareProtected
-    protected void someProtectedMethod() {
-
-    }
+    ExecutableRelationShip getRelationShip();
 }

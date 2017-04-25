@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package jcomposition.example;
+package jcomposition.api.policies;
 
-import jcomposition.api.annotations.ShareProtected;
-import jcomposition.example.interfaces.diamond.ICircleEvents;
+import jcomposition.api.types.IExecutableElementContainer;
+import jcomposition.api.types.ITypeElementPairContainer;
 
-public class CircleEvents implements ICircleEvents {
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * Make method abstract in case of conflict.
+ */
+public class MakeAbstractPolicy extends BaseAbstractPolicy {
     @Override
-    public void onUpdate() {
-        System.out.println("Circle onUpdate");
-    }
+    public List<ITypeElementPairContainer> merge(IExecutableElementContainer elementContainer, List<ITypeElementPairContainer> overriders) {
+        if (overriders.size() > 0) {
+            return Collections.emptyList();
+        }
 
-    @Override
-    public void onVisibilityChanged(boolean visibility) {
-        System.out.println("Visibility of circle has changed to " + visibility);
-    }
-
-    @ShareProtected
-    protected void someProtectedMethod() {
-
+        return overriders;
     }
 }

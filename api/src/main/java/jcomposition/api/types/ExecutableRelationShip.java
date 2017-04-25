@@ -14,24 +14,15 @@
  * limitations under the License.
  */
 
-package jcomposition.example;
+package jcomposition.api.types;
 
-import jcomposition.api.annotations.ShareProtected;
-import jcomposition.example.interfaces.diamond.ICircleEvents;
-
-public class CircleEvents implements ICircleEvents {
-    @Override
-    public void onUpdate() {
-        System.out.println("Circle onUpdate");
-    }
-
-    @Override
-    public void onVisibilityChanged(boolean visibility) {
-        System.out.println("Visibility of circle has changed to " + visibility);
-    }
-
-    @ShareProtected
-    protected void someProtectedMethod() {
-
-    }
+public enum ExecutableRelationShip {
+    /**
+     * There is no hiding or overriding relationship between executable and type element.
+     */
+    Nothing,
+    Same,
+    Overriding,
+    OverridingAbstract,
+    Hiding
 }
