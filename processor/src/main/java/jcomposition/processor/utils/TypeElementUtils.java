@@ -28,12 +28,12 @@ import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
-import javax.tools.Diagnostic;
 
 import java.util.*;
 
 import static jcomposition.processor.utils.Util.addValueToMapList;
 import static jcomposition.processor.utils.Util.isAbstract;
+import static jcomposition.processor.utils.Util.isFinal;
 
 public final class TypeElementUtils {
 
@@ -155,6 +155,7 @@ public final class TypeElementUtils {
                 TypeElementPairContainer typeElementPairContainer = new TypeElementPairContainer(concreteIntf, bind, baseDt, intfInjected, result.getRelationShip());
                 typeElementPairContainer.setAbstract(result.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Same
                         || result.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.OverridingAbstract);
+                typeElementPairContainer.setFinal(isFinal(bind));
 
                 addValueToMapList(container, typeElementPairContainer, map);
             } else {
@@ -182,6 +183,7 @@ public final class TypeElementUtils {
                 TypeElementPairContainer typeElementPairContainer = new TypeElementPairContainer(concreteIntf, bind, concreteDt, intfInjected, result.getRelationShip());
                 typeElementPairContainer.setAbstract(isAbstract(method)
                         || result.getRelationShip() == TypeElementPairContainer.ExecutableRelationShip.Same);
+                typeElementPairContainer.setFinal(isFinal(bind));
 
                 addValueToMapList(container, typeElementPairContainer, map);
             }
