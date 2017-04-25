@@ -97,6 +97,7 @@ public final class TypeElementUtils {
                                                        TypeElement containing, ProcessingEnvironment env) {
         Elements els = env.getElementUtils();
 
+        // FIXME: Does Same really need?
         if (overrider.equals(overridden)) {
             return ExecutableRelationShip.Same;
         } else if (els.overrides(overrider, overridden, containing)) {

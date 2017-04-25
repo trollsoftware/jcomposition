@@ -183,14 +183,7 @@ public class GenerateStep extends AbstractStep {
             return null;
         }
 
-        /**
-         * FIXME: maybe take the first element is not exactly correct?
-         */
-        ITypeElementPairContainer container = overriders.get(0);
-
-        if (container.getRelationShip() == ExecutableRelationShip.OverridingAbstract
-                || container.getRelationShip() == ExecutableRelationShip.Overriding
-                || container.getRelationShip() == ExecutableRelationShip.Same) {
+        if (executableContainer.hasSuperMethod()) {
             builder.addAnnotation(Override.class);
         }
 
