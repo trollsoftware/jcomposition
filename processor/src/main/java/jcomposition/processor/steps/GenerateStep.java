@@ -27,9 +27,7 @@ import jcomposition.api.annotations.Composition;
 import jcomposition.api.annotations.ShareProtected;
 import jcomposition.processor.types.ExecutableElementContainer;
 import jcomposition.processor.types.TypeElementPairContainer;
-import jcomposition.processor.utils.AnnotationUtils;
-import jcomposition.processor.utils.CompositionUtils;
-import jcomposition.processor.utils.TypeElementUtils;
+import jcomposition.processor.utils.*;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.*;
@@ -201,7 +199,7 @@ public class GenerateStep extends AbstractStep {
                 continue;
             }
 
-            String statement = getExecutableStatement(executableElement, overrider.getBind());
+            String statement = getExecutableStatement(executableElement, overrider);
 
             if (statement != null) {
                 builder.addStatement(statement);
@@ -256,15 +254,22 @@ public class GenerateStep extends AbstractStep {
         return paramBuilder.toString();
     }
 
-    private String getExecutableStatement(ExecutableElement executableElement, TypeElement overrider) {
+    private String getExecutableStatement(ExecutableElement executableElement, TypeElementPairContainer overriderContainer) {
+        TypeElement overrider = overriderContainer.getBind();
         StringBuilder builder = new StringBuilder();
 
         if (executableElement.getReturnType().getKind() != TypeKind.VOID) {
             builder.append("return ");
         }
 
-        builder.append("getComposition().composition_" + overrider.getSimpleName()
-                + "._super_" + executableElement.getSimpleName() + "(" + getParametersScope(executableElement) + ")");
+        builder.append("getComposition().composition_").append(overrider.getSimpleName()).append(".");
+
+        if (!overriderContainer.isFinal()) {
+            builder.append("_super_");
+        }
+
+        builder.append(executableElement.getSimpleName())
+                .append("(").append(getParametersScope(executableElement)).append(")");
 
         return builder.toString();
     }

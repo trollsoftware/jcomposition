@@ -39,6 +39,7 @@ public class TypeElementPairContainer {
     private ExecutableRelationShip relationShip;
     private boolean useInjection;
     private boolean isAbstract;
+    private boolean isFinal;
 
     public TypeElementPairContainer(TypeElement intf, TypeElement bind, DeclaredType declaredType, boolean useInjection) {
         this.intf = intf;
@@ -59,6 +60,14 @@ public class TypeElementPairContainer {
 
     public void setAbstract(boolean anAbstract) {
         isAbstract = anAbstract;
+    }
+
+    public boolean isFinal() {
+        return isFinal;
+    }
+
+    public void setFinal(boolean aFinal) {
+        isFinal = aFinal;
     }
 
     public boolean hasUseInjection() {

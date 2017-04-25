@@ -71,6 +71,12 @@ public class Util {
         return predicate.apply(typeElement);
     }
 
+    public static boolean isFinal(Element typeElement) {
+        Predicate<Element> predicate = MoreElements.hasModifiers(Modifier.FINAL);
+
+        return predicate.apply(typeElement);
+    }
+
     public static DeclaredType getDeclaredType(DeclaredType baseDt, TypeElement intf, TypeElement bind, ProcessingEnvironment env) {
         TypeMirror[] params = new TypeMirror[intf.getTypeParameters().size()];
 
