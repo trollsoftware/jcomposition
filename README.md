@@ -180,8 +180,8 @@ And add the dependency:
 ```
 dependencies {
     // Use compile for processor instead of apt if you haven't apt dependency.
-    apt 'com.github.trollsoftware.jcomposition:processor:1.2.0'
-    compile 'com.github.trollsoftware.jcomposition:api:1.2.0'
+    apt 'com.github.trollsoftware.jcomposition:processor:1.2.1'
+    compile 'com.github.trollsoftware.jcomposition:api:1.2.1'
 }
 ```
 
