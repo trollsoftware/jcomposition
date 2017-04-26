@@ -169,7 +169,8 @@ public final class TypeElementUtils {
                 addValueToMapList(container, null, map);
             }
 
-            container.setHasSuperMethod(result.isDuplicateFound());
+            // interface's methods should not be redefined
+            container.setRedefinitionRequired(false);
         }
     }
 
@@ -199,7 +200,8 @@ public final class TypeElementUtils {
                 addValueToMapList(container, (ITypeElementPairContainer) typeElementPairContainer, map);
             }
 
-            container.setHasSuperMethod(result.isDuplicateFound());
+            // Redefine only if no duplicates found
+            container.setRedefinitionRequired(!result.isDuplicateFound());
         }
     }
 

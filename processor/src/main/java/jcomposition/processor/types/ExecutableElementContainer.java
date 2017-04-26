@@ -30,7 +30,7 @@ public class ExecutableElementContainer implements IExecutableElementContainer {
     private ExecutableElement executableElement;
     private DeclaredType declaredType;
     private ProcessingEnvironment env;
-    private boolean hasSuperMethod;
+    private boolean redefinitionRequired;
 
     public ExecutableElementContainer(ExecutableElement executableElement, DeclaredType declaredType, ProcessingEnvironment env) {
         this.executableElement = executableElement;
@@ -48,12 +48,13 @@ public class ExecutableElementContainer implements IExecutableElementContainer {
         return declaredType;
     }
 
-    public boolean hasSuperMethod() {
-        return hasSuperMethod;
+    @Override
+    public boolean redefinitionRequired() {
+        return redefinitionRequired;
     }
 
-    public void setHasSuperMethod(boolean hasSuperMethod) {
-        this.hasSuperMethod = hasSuperMethod;
+    public void setRedefinitionRequired(boolean redefinitionRequired) {
+        this.redefinitionRequired = redefinitionRequired;
     }
 
     @Override

@@ -24,5 +24,5 @@ public interface IExecutableElementContainer {
 
     DeclaredType getDeclaredType();
 
-    boolean hasSuperMethod();
+    boolean redefinitionRequired();
 }

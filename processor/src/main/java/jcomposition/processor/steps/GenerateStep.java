@@ -24,7 +24,6 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.*;
 import jcomposition.api.IMergeConflictPolicy;
-import jcomposition.api.types.ExecutableRelationShip;
 import jcomposition.api.types.IExecutableElementContainer;
 import jcomposition.api.types.ITypeElementPairContainer;
 import jcomposition.api.annotations.Composition;
@@ -175,15 +174,16 @@ public class GenerateStep extends AbstractStep {
         }
 
         if (overriders.isEmpty()) {
-            if (!executableContainer.hasSuperMethod() && isAbstract(executableElement)) {
+            if (executableContainer.redefinitionRequired() && isAbstract(executableElement)) {
                 builder.addModifiers(Modifier.ABSTRACT);
 
                 return builder.build();
             }
+
             return null;
         }
 
-        if (executableContainer.hasSuperMethod()) {
+        if (!executableContainer.redefinitionRequired()) {
             builder.addAnnotation(Override.class);
         }
 
