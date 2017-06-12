@@ -27,7 +27,6 @@ import jcomposition.api.IMergeConflictPolicy;
 import jcomposition.api.types.IExecutableElementContainer;
 import jcomposition.api.types.ITypeElementPairContainer;
 import jcomposition.api.annotations.Composition;
-import jcomposition.api.annotations.ShareProtected;
 import jcomposition.processor.utils.*;
 
 import javax.annotation.processing.ProcessingEnvironment;
@@ -41,7 +40,6 @@ import java.lang.annotation.Annotation;
 import java.util.*;
 
 import static jcomposition.processor.utils.Util.isAbstract;
-import static jcomposition.processor.utils.Util.isProtected;
 
 public class GenerateStep extends AbstractStep {
     private boolean isAbstract = false;
@@ -51,6 +49,7 @@ public class GenerateStep extends AbstractStep {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Set<? extends Class<? extends Annotation>> annotations() {
         return Sets.newHashSet(Composition.class);
     }
@@ -148,7 +147,6 @@ public class GenerateStep extends AbstractStep {
 
             specBuilder.addMethod(MethodSpec.methodBuilder("onInject")
                     .addModifiers(Modifier.ABSTRACT, Modifier.PROTECTED)
-                    .addAnnotation(ShareProtected.class)
                     .addParameter(ParameterSpec.builder(nestedCompositionTypeClassName, "composition", Modifier.FINAL)
                             .build())
                     .build());
@@ -168,10 +166,6 @@ public class GenerateStep extends AbstractStep {
 
         DeclaredType declaredType = executableContainer.getDeclaredType();
         MethodSpec.Builder builder = MethodSpecUtils.getBuilder(executableElement, declaredType, getProcessingEnv().getTypeUtils());
-
-        if (isProtected(executableElement)) {
-            builder.addAnnotation(ShareProtected.class);
-        }
 
         if (overriders.isEmpty()) {
             if (executableContainer.redefinitionRequired() && isAbstract(executableElement)) {

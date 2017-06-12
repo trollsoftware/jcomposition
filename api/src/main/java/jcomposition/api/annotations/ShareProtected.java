@@ -24,5 +24,9 @@ import java.lang.annotation.*;
         ElementType.TYPE,
         ElementType.METHOD
 })
+@Deprecated
+/**
+ * Deprecated. This behaviour applies by default.
+ */
 public @interface ShareProtected {
 }

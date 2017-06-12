@@ -42,9 +42,8 @@ import static jcomposition.processor.utils.Util.isFinal;
 public final class TypeElementUtils {
 
     /**
-     * Get Map of public and protected methods with @ShareProtected annotation.
+     * Get Map of public and protected methods.
      * Map entry represent format like [{@link Visibility#PUBLIC} - {@link List&lt;ExecutableElement&gt;}]
-     * @see {@link jcomposition.api.annotations.ShareProtected}
      * @param element element from methods will be extracted
      * @param env {@link ProcessingEnvironment}
      * @return Map
@@ -60,8 +59,6 @@ public final class TypeElementUtils {
         List<? extends Element> allMembers = env
                 .getElementUtils()
                 .getAllMembers(element);
-
-        boolean shareProtected = AnnotationUtils.hasShareProtectedAnnotation(element);
 
         // Get only public and protected methods with @ShareProtected annotation.
         for (Element member : allMembers) {
@@ -81,9 +78,7 @@ public final class TypeElementUtils {
                 continue;
 
             if (modifiers.contains(Modifier.PROTECTED)) {
-                if (shareProtected || AnnotationUtils.hasShareProtectedAnnotation(executableMember)) {
-                    addValueToMapList(Visibility.PROTECTED, executableMember, map);
-                }
+                addValueToMapList(Visibility.PROTECTED, executableMember, map);
             } else if (modifiers.contains(Modifier.PUBLIC)) {
                 addValueToMapList(Visibility.PUBLIC, executableMember, map);
             }
@@ -115,10 +110,10 @@ public final class TypeElementUtils {
 
     /**
      * Finds method in executableElements and gets a relationship between them
-     * @param method
-     * @param executableElements
-     * @param containing
-     * @param env
+     * @param method method
+     * @param executableElements list of methods
+     * @param containing type element that contains method
+     * @param env annotation processing environment
      * @return relationship
      */
     private static IRelationShipResult findRelation(ExecutableElement method,
@@ -207,8 +202,8 @@ public final class TypeElementUtils {
 
     /**
      * Get list of executable elements and list of overriders
-     * @param element
-     * @param env
+     * @param element element that contains executable elements
+     * @param env annotation processing environment
      * @return map
      */
     public static Map<IExecutableElementContainer, List<ITypeElementPairContainer>> getMethodsMap(TypeElement element, ProcessingEnvironment env) {
