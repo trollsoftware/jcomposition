@@ -106,8 +106,7 @@ public class Movable implements IMovable {
         System.out.println("I'm moving to (" + x + ", " + y + ")");
         return false;
     }
-    
-    @ShareProtected
+
     protected abstract void onMove();
 }
 
@@ -155,9 +154,6 @@ MakeAbstractPolicy.class
 MixVoidPolicy.class
 UseFirstPolicy.class
 ```
-
-## Protected modifier
-If you need a protected method in your composition from one of components, you could use `@ShareProtected` annotation and apply it on whole class or exactly method. Example of usage you can find in *Dependency injection* section.
 
 ## Constraints
 If you are not using dependency injection, binded class must have an empty argument constructor.
