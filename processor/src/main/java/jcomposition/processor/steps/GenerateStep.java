@@ -165,7 +165,7 @@ public class GenerateStep extends AbstractStep {
         List<ITypeElementPairContainer> overriders = policy.merge(executableContainer, entry.getValue());
 
         DeclaredType declaredType = executableContainer.getDeclaredType();
-        MethodSpec.Builder builder = MethodSpecUtils.getBuilder(executableElement, declaredType, getProcessingEnv().getTypeUtils());
+        MethodSpec.Builder builder = MethodSpecUtils.getBuilder(executableElement, declaredType, getProcessingEnv());
 
         if (overriders.isEmpty()) {
             if (executableContainer.redefinitionRequired() && isAbstract(executableElement)) {

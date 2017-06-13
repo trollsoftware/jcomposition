@@ -16,6 +16,7 @@
 
 package com.squareup.javapoet;
 
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeParameterElement;
@@ -24,6 +25,7 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVariable;
+import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import java.util.*;
 
@@ -35,13 +37,16 @@ public final class MethodSpecUtils {
     /**
      * This is a copy of {@link MethodSpec#overriding(ExecutableElement, DeclaredType, Types)}
      * but without adding an {@link Override} annotation
-     * @param method
-     * @param enclosing
-     * @param types
+     * @param method method
+     * @param enclosing enclosing type
+     * @param env annotation processor environment
      * @return Builder
      */
-    public static MethodSpec.Builder getBuilder(ExecutableElement method, DeclaredType enclosing, Types types) {
+    public static MethodSpec.Builder getBuilder(ExecutableElement method, DeclaredType enclosing, ProcessingEnvironment env) {
         checkNotNull(method, "method == null");
+
+        Types types = env.getTypeUtils();
+        Elements elements = env.getElementUtils();
 
         ExecutableType executableType = (ExecutableType) types.asMemberOf(enclosing, method);
         List<? extends TypeMirror> resolvedParameterTypes = executableType.getParameterTypes();
@@ -86,6 +91,11 @@ public final class MethodSpecUtils {
 
         for (TypeMirror thrownType : method.getThrownTypes()) {
             methodBuilder.addException(TypeName.get(thrownType));
+        }
+
+        String javaDoc = elements.getDocComment(method);
+        if (javaDoc != null) {
+            methodBuilder.addJavadoc(javaDoc, "");
         }
 
         return methodBuilder;

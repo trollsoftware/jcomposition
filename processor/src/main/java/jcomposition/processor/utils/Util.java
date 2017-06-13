@@ -42,13 +42,13 @@ public class Util {
     }
 
     /**
-     * Adds a value to map's value list.
-     * @param key
-     * @param value pass null to just create empty list
-     * @param map
-     * @param <K>
-     * @param <V>
-     * @param <T>
+     * Adds a value to multi map's value list.
+     * @param key key in multi map
+     * @param value value pass null to just create empty list
+     * @param map multi map
+     * @param <K> key type
+     * @param <V> list type
+     * @param <T> value type
      */
     @SuppressWarnings("unchecked")
     public static <K, V extends List<T>, T> void addValueToMapList(K key, T value, Map<K, V> map) {

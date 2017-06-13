@@ -30,7 +30,9 @@ public class CircleEvents implements ICircleEvents {
         System.out.println("Visibility of circle has changed to " + visibility);
     }
 
-    @ShareProtected
+    /**
+     * Test of protected method
+     */
     protected void someProtectedMethod() {
 
     }

@@ -22,5 +22,10 @@ import jcomposition.example.Events;
 @Bind(Events.class)
 public interface IEvents {
     void onUpdate();
+
+    /**
+     * Calls when visibility change
+     * @param visibility is visible
+     */
     void onVisibilityChanged(boolean visibility);
 }
