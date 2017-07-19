@@ -18,16 +18,17 @@ package jcomposition.api.annotations;
 
 import jcomposition.api.Const;
 import jcomposition.api.IMergeConflictPolicy;
+import jcomposition.api.ITypeHandler;
+import jcomposition.api.handlers.DefaultTypeHandler;
 import jcomposition.api.policies.MixVoidPolicy;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import javax.annotation.Generated;
+import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
 public @interface Composition {
     String name() default Const.UNDEFINED;
     Class<? extends IMergeConflictPolicy> onConflict() default MixVoidPolicy.class;
+    Class<? extends ITypeHandler> typeHandler() default DefaultTypeHandler.class;
 }

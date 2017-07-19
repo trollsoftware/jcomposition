@@ -24,9 +24,11 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.*;
 import jcomposition.api.IMergeConflictPolicy;
+import jcomposition.api.ITypeHandler;
 import jcomposition.api.types.IExecutableElementContainer;
 import jcomposition.api.types.ITypeElementPairContainer;
 import jcomposition.api.annotations.Composition;
+import jcomposition.api.types.specs.TypeSpecModel;
 import jcomposition.processor.utils.*;
 
 import javax.annotation.processing.ProcessingEnvironment;
@@ -128,13 +130,14 @@ public class GenerateStep extends AbstractStep {
         String compositionName = AnnotationUtils.getCompositionName(typeElement, getProcessingEnv());
         IMergeConflictPolicy mergeConflictPolicy = AnnotationUtils.getCompositionMergeConflictPolicy(
                 typeElement, getProcessingEnv());
+        ITypeHandler typeHandler = AnnotationUtils.getCompositionTypeHandler(typeElement, getProcessingEnv());
 
         TypeSpec.Builder specBuilder = TypeSpec.classBuilder(compositionName)
                 .addSuperinterface(TypeName.get(typeElement.asType()))
                 .addSuperinterface(CompositionUtils.getInheritedCompositionInterface(typeElement, getProcessingEnv()))
                 .addTypeVariables(getTypeParameters(typeElement))
                 .addModifiers(Modifier.PUBLIC)
-                .addType(CompositionUtils.getCompositionTypeSpec(methodsMap, typeElement, getProcessingEnv()))
+                .addType(CompositionUtils.getCompositionTypeSpec(methodsMap, typeElement, typeHandler, getProcessingEnv()))
                 .addMethods(getMethodSpecs(methodsMap, typeElement, mergeConflictPolicy))
                 .addMethod(CompositionUtils.getCompositeMethodSpec(typeElement, getProcessingEnv()))
                 .addField(CompositionUtils.getCompositeFieldSpec(typeElement));
@@ -155,6 +158,10 @@ public class GenerateStep extends AbstractStep {
         if (isAbstract) {
             specBuilder.addModifiers(Modifier.ABSTRACT);
         }
+
+        TypeSpecModel model = new TypeSpecModel();
+        typeHandler.onCompositionGenerated(model);
+        TypeSpecUtils.applyTypeSpecModel(model, specBuilder);
 
         return specBuilder.build();
     }

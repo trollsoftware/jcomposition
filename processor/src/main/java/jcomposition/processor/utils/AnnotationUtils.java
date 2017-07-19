@@ -22,6 +22,7 @@ import com.google.common.base.Optional;
 import com.sun.tools.javac.code.Type;
 import jcomposition.api.Const;
 import jcomposition.api.IMergeConflictPolicy;
+import jcomposition.api.ITypeHandler;
 import jcomposition.api.annotations.Bind;
 import jcomposition.api.annotations.Composition;
 import jcomposition.api.annotations.ShareProtected;
@@ -76,6 +77,21 @@ public final class AnnotationUtils {
         }
 
         throw new IncompleteAnnotationException(Composition.class, "onConflict");
+    }
+
+    // TODO: refactor three composition methods that returns annotations info
+    @SuppressWarnings("unchecked")
+    public static ITypeHandler getCompositionTypeHandler(TypeElement element, ProcessingEnvironment env) {
+        Optional<AnnotationValue> value = getParameterFrom(element, Composition.class, "typeHandler", env);
+
+        if (value.isPresent()) {
+            TypeElement typeElement = MoreTypes.asTypeElement((Type) value.get().getValue());
+            try {
+                return (ITypeHandler) Class.forName(typeElement.getQualifiedName().toString()).newInstance();
+            } catch (Exception ignore) { }
+        }
+
+        throw new IncompleteAnnotationException(Composition.class, "typeHandler");
     }
 
     public static TypeElement getBindClassType(TypeElement element, ProcessingEnvironment env) {

@@ -19,9 +19,12 @@ package jcomposition.processor.utils;
 import com.google.auto.common.MoreElements;
 import com.squareup.javapoet.*;
 import jcomposition.api.IComposition;
+import jcomposition.api.ITypeHandler;
 import jcomposition.api.types.IExecutableElementContainer;
 import jcomposition.api.types.ITypeElementPairContainer;
+import jcomposition.api.types.specs.TypeSpecModel;
 
+import javax.annotation.Generated;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.inject.Inject;
 import javax.lang.model.element.*;
@@ -33,7 +36,7 @@ import java.util.*;
 public final class CompositionUtils {
 
      public static TypeSpec getCompositionTypeSpec(Map<IExecutableElementContainer,
-             List<ITypeElementPairContainer>> methodsMap, TypeElement typeElement, ProcessingEnvironment env) {
+             List<ITypeElementPairContainer>> methodsMap, TypeElement typeElement, ITypeHandler handler, ProcessingEnvironment env) {
          TypeSpec.Builder builder = TypeSpec.classBuilder("Composition");
          builder.addModifiers(Modifier.FINAL, Modifier.PUBLIC);
 
@@ -53,6 +56,10 @@ public final class CompositionUtils {
                  builder.addType(entry.getValue());
              }
          }
+         TypeSpecModel model = new TypeSpecModel();
+         handler.onInternalCompositionGenerated(model);
+         TypeSpecUtils.applyTypeSpecModel(model, builder);
+
          return builder.build();
      }
 
